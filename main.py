@@ -42,39 +42,26 @@ if __name__ == '__main__':
     print(len(treatment_group))
     print(medical_data)
     # Match treatment units with control units using nearest neighbors
-    k = 2  # Number of nearest neighbors to match
+    k = 5  # Number of nearest neighbors to match
     matched_pairs = []
     count = 1
     for _, treated_unit in treatment_group.iterrows():
         print(count)
         count+=1
-        nearest_neighbors= methods.nnmNoReplacement(treated_unit, control_group, k)
+        
+        nearest_neighbors = methods.propensity_score_matching_caliper(treated_unit, control_group, k)
         #print(f"the control group before drop:{control_group}")
-        print(nearest_neighbors)
-        control_group = control_group[~control_group.isin(nearest_neighbors)].dropna() #This ensures that there is no replacement
+        #print(nearest_neighbors)
+        control_group = control_group[~control_group.isin(nearest_neighbors)].dropna()
+        
+       
         
         #print(f"the control group after drop:{control_group}")
         matched_pairs.append((treated_unit, nearest_neighbors))
         #print(matched_pairs)
     #medical_data2d = pd.concat([pd.concat([treated, control], axis=1) for treated, control in matched_pairs])
     
-    # Perform propensity score matching with caliper (caliper=0.2)
-    """matched_medical_data_caliper = methods.propensity_score_matching_caliper(medical_data, 'Treatment', 'Propensity Score', caliper=0.2)
-    matched_medical_data_nearest_neighbor_matching_without_replacement = methods.nearest_neighbor_matching_without_replacement(medical_data)
-    matched_medical_data_nearest_neighbor_matching_with_replacement = methods.nearest_neighbor_matching_with_replacement(medical_data)
-    print("Original Dataset:")
-    print(len(medical_data))
-    print(medical_data)
-    print("Matched caliper Dataset:")
-    print(len(matched_medical_data_caliper))
-    print(matched_medical_data_caliper)
-    print("Matched with replacement Dataset:")
-    print(len(matched_medical_data_nearest_neighbor_matching_with_replacement))
-    print(matched_medical_data_nearest_neighbor_matching_with_replacement)
-    print("Matched without replacement Dataset:")
-    print(len(matched_medical_data_nearest_neighbor_matching_without_replacement))
-    print(matched_medical_data_nearest_neighbor_matching_without_replacement)"""
-
+    
     print(len(matched_pairs))
     count=1
     for row in matched_pairs:
