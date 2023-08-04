@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from scipy.spatial.distance import cdist
-
+"""
 def nnm(treated_unit, control_group, k):
     nn_model = NearestNeighbors(n_neighbors=k)
     nn_model.fit(control_group[['Propensity Score']])
@@ -32,7 +32,7 @@ def propensity_score_matching_caliper(treated_unit, control_group, k, caliper=0.
     #matched_data = pd.concat([treated_unit, matched_control_data[propensity_diff <= caliper]], axis=0)
 
     return matched_control_data[propensity_diff <= caliper]
-
+"""
 
 def nnm2(medical_data, replacement, caliper, k):
     pairs = []
