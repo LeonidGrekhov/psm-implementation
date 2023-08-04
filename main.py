@@ -37,6 +37,7 @@ if __name__ == '__main__':
     total_patients = 100
     treated_patients = 20
     medical_data = generate_dataset(total_patients, treated_patients)
+    """   
     treatment_group = medical_data[medical_data['Treatment'] == 1]
     control_group = medical_data[medical_data['Treatment'] == 0]
     print(len(treatment_group))
@@ -61,7 +62,8 @@ if __name__ == '__main__':
         #print(matched_pairs)
     #medical_data2d = pd.concat([pd.concat([treated, control], axis=1) for treated, control in matched_pairs])
     
-    
+    """
+    matched_pairs = methods.nnm2(medical_data, replacement = 1, caliper = 0.02, k = 3)
     print(len(matched_pairs))
     count=1
     for row in matched_pairs:
