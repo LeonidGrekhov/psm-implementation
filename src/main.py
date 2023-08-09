@@ -1,3 +1,10 @@
+import datetime
+import json
+import logging
+import logging.config
+import os
+
+import util.FileProvider as FP
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
@@ -6,8 +13,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
-import methods
+import util.methods as methods
 from scipy.spatial.distance import cdist
+
+logging.basicConfig(filename='test.log', level=logging.DEBUG)
 
 # Set a random seed for reproducibility
 np.random.seed(42)
@@ -32,41 +41,21 @@ def generate_dataset(total_patients, treated_patients):
 
 
 if __name__ == '__main__':
+    logging.config.fileConfig(FP.get_log_config_file())
+    logger = logging.getLogger('Main')
+    logger.debug('======Start======')
     # Generate synthetic medical dataset with additional columns and binary outcome
     # Generate the dataset
     total_patients = 100
     treated_patients = 20
     medical_data = generate_dataset(total_patients, treated_patients)
-    """   
-    treatment_group = medical_data[medical_data['Treatment'] == 1]
-    control_group = medical_data[medical_data['Treatment'] == 0]
-    print(len(treatment_group))
-    print(medical_data)
-    # Match treatment units with control units using nearest neighbors
-    k = 5  # Number of nearest neighbors to match
-    matched_pairs = []
-    count = 1
-    for _, treated_unit in treatment_group.iterrows():
-        print(count)
-        count+=1
-        
-        nearest_neighbors = methods.propensity_score_matching_caliper(treated_unit, control_group, k)
-        #print(f"the control group before drop:{control_group}")
-        #print(nearest_neighbors)
-        control_group = control_group[~control_group.isin(nearest_neighbors)].dropna()
-        
-       
-        
-        #print(f"the control group after drop:{control_group}")
-        matched_pairs.append((treated_unit, nearest_neighbors))
-        #print(matched_pairs)
-    #medical_data2d = pd.concat([pd.concat([treated, control], axis=1) for treated, control in matched_pairs])
+    logger.debug(medical_data[medical_data['Treatment'] == 1])
+    matched_pairs = methods.nnm2(medical_data, replacement = 1, caliper = 0.02, k = 11)
     
-    """
-    matched_pairs = methods.nnm2(medical_data, replacement = 1, caliper = 0.02, k = 5)
-    print(len(matched_pairs))
+    logging.debug('lenth of matched pairs')
+    logging.debug(len(matched_pairs))
     count=1
     for row in matched_pairs:
-        print(f"{count}\n")
+        logging.debug(f"{count}\n")
         count+=1
-        print(f"Treated Patient:\n{row[0]},\nMatched Patient(s):\n{row[1]}\n")
+        logging.debug(f"Treated Patient:\n{row[0]},\nMatched Patient(s):\n{row[1]}\n")
