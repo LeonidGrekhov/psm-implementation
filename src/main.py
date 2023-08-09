@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 import src.util.methods as methods
 from scipy.spatial.distance import cdist
 
-logging.basicConfig(filename='test.log', level=logging.DEBUG)
 
 # Set a random seed for reproducibility
 np.random.seed(42)
@@ -40,7 +39,6 @@ def generate_dataset(total_patients, treated_patients):
 
 
 def main():
-    logging.config.fileConfig(FP.get_log_config_file())
     logger = logging.getLogger('Main')
     logger.debug('======Start======')
     # Generate synthetic medical dataset with additional columns and binary outcome
@@ -49,12 +47,15 @@ def main():
     treated_patients = 20
     medical_data = generate_dataset(total_patients, treated_patients)
     logger.debug(medical_data[medical_data['Treatment'] == 1])
-    matched_pairs = methods.nnm2(medical_data, replacement=1, caliper=0.02, k=11)
+    matched_pairs = methods.nnm2(medical_data, replacement=1, caliper=0.02, k=2)
 
-    logging.debug('lenth of matched pairs')
-    logging.debug(len(matched_pairs))
+    logger.debug('length of matched pairs')
+    logger.debug(len(matched_pairs))
     count = 1
     for row in matched_pairs:
         logging.debug(f"{count}\n")
         count += 1
         logging.debug(f"Treated Patient:\n{row[0]},\nMatched Patient(s):\n{row[1]}\n")
+
+    logger.debug('======Finish======')
+
