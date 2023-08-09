@@ -3,12 +3,13 @@ import json
 import logging
 import logging.config
 import os
-from datamodel.Column import DataDictionary as dd
-import util.FileProvider as FP
+from src.datamodel.Column import DataDictionary as dd
+import src.util.FileProvider as FP
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from scipy.spatial.distance import cdist
+
 
 def nnm2(medical_data, replacement, caliper, k):
     logging.config.fileConfig(FP.get_log_config_file())
@@ -20,20 +21,20 @@ def nnm2(medical_data, replacement, caliper, k):
     count = 1
 
     if replacement == 1:
-        print("Nearest Neighbor with replament")
+        print("Nearest Neighbor with replacement")
 
     if caliper != 0:
         print("Nearest Neighbor with caliper")
 
     for _, treated_unit in treatment_group.iterrows():
         logger.debug(count)
-        count+=1
+        count += 1
         logger.debug([treated_unit[dd.propensity_scores]])
         logger.debug(len(control_group))
         nn_model = NearestNeighbors(n_neighbors=k)
-        
+
         nn_model.fit(control_group[[dd.propensity_scores]])
-        
+
         distances, indices = nn_model.kneighbors([[treated_unit[dd.propensity_scores]]])  # Reshape to 2D array
         if caliper != 0:
             matched_control_data = control_group.iloc[indices[0]]
