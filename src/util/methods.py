@@ -11,10 +11,11 @@ from sklearn.neighbors import NearestNeighbors
 from scipy.spatial.distance import cdist
 
 
-def nnm2(medical_data, replacement, caliper, k):
-    logging.config.fileConfig(FP.get_log_config_file())
+def nnm2(medical_data: pd.DataFrame, replacement: int, caliper: float, k: int) -> list:
+    """
+    Function description
+    """
     logger = logging.getLogger('NNM2')
-    logger.debug('======Start======')
     pairs = []
     treatment_group = medical_data[medical_data[dd.treatment] == 1]
     control_group = medical_data[medical_data[dd.treatment] == 0]
