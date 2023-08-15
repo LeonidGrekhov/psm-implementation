@@ -24,7 +24,7 @@ def nnm2(medical_data: pd.DataFrame, replacement: int, caliper: float, k: int) -
     treatment_group = medical_data[medical_data[dd.treatment] == 1]
     control_group = medical_data[medical_data[dd.treatment] == 0]
     count = 0
-    
+    logger.debug(f'length of control group before execution  {len(control_group)}')
     if replacement == 1:
         print("Nearest Neighbor with replacement")
 
@@ -32,6 +32,7 @@ def nnm2(medical_data: pd.DataFrame, replacement: int, caliper: float, k: int) -
         print("Nearest Neighbor with caliper")
     
     for _, treated_unit in treatment_group.iterrows():
+        
         propensity_diff = np.abs(control_group[dd.propensity_scores] - treated_unit[dd.propensity_scores])
         idx = propensity_diff.idxmin()
         count += 1
@@ -43,16 +44,16 @@ def nnm2(medical_data: pd.DataFrame, replacement: int, caliper: float, k: int) -
             matched_control_data = control_group.loc[idx]
             if diff <= caliper:
                 nearest_neighbors = matched_control_data
-                match = 1
-                if replacement == 1 and match == 1:
-                    control_group = control_group.drop(control_group.loc[idx][0])    
+                match = 1  
             else:
+                logger.debug("diff greater than caliper")
                 match = 0
         else:
             match = 1
             nearest_neighbors = control_group.loc[idx]
-            if replacement == 1:
-                control_group = control_group.drop(control_group.loc[idx][0])
+        if replacement == 1 and match == 1:
+            control_group = control_group.drop(control_group.loc[idx][0])   
+
         """
         nn_model = NearestNeighbors(n_neighbors=k)
         nn_model.fit(control_group[[dd.propensity_scores]])
@@ -71,5 +72,5 @@ def nnm2(medical_data: pd.DataFrame, replacement: int, caliper: float, k: int) -
         """
         if match:
             pairs.append((treated_unit, nearest_neighbors))
-        logger.debug(f'length of control group after execution  {len(control_group)}')
+    logger.debug(f'length of control group after execution  {len(control_group)}')   
     return pairs
