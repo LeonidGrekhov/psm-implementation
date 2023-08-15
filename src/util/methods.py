@@ -16,8 +16,6 @@ def nnm2(medical_data: pd.DataFrame, replacement: int, caliper: float, k: int) -
     Accepts dataframe with parameters of replacement, caliper and number of neighbors
     returns a list of pairs
     """
-    
-    
     logger = logging.getLogger('NNM2')
     pairs = []
     logger.debug(f'print medical data: {medical_data}')
@@ -32,12 +30,10 @@ def nnm2(medical_data: pd.DataFrame, replacement: int, caliper: float, k: int) -
         print("Nearest Neighbor with caliper")
     
     for _, treated_unit in treatment_group.iterrows():
-        
         propensity_diff = np.abs(control_group[dd.propensity_scores] - treated_unit[dd.propensity_scores])
         idx = propensity_diff.idxmin()
         count += 1
         diff = propensity_diff[idx]
-        
         logger.debug(f'propensity_diff: {propensity_diff[idx]}')
         match = 0
         if caliper != 0:
@@ -53,23 +49,6 @@ def nnm2(medical_data: pd.DataFrame, replacement: int, caliper: float, k: int) -
             nearest_neighbors = control_group.loc[idx]
         if replacement == 1 and match == 1:
             control_group = control_group.drop(control_group.loc[idx][0])   
-
-        """
-        nn_model = NearestNeighbors(n_neighbors=k)
-        nn_model.fit(control_group[[dd.propensity_scores]])
-        distances, indices = nn_model.kneighbors([[treated_unit[dd.propensity_scores]]])  # Reshape to 2D array
-        
-        if caliper != 0:
-            matched_control_data = control_group.iloc[indices[0]]
-            propensity_diff = np.abs(matched_control_data[dd.propensity_scores] - treated_unit[dd.propensity_scores])
-            nearest_neighbors = matched_control_data[propensity_diff <= caliper]
-
-        else:
-            nearest_neighbors = control_group.iloc[indices[0]]
-
-        if replacement == 1:
-            control_group = control_group[~control_group.isin(nearest_neighbors)].dropna()
-        """
         if match:
             pairs.append((treated_unit, nearest_neighbors))
     logger.debug(f'length of control group after execution  {len(control_group)}')   
