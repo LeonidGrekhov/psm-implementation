@@ -30,14 +30,11 @@ def generate_dataset(total_patients, treated_patients):
     treatment_assignment = (np.random.rand(total_patients) > 0.8).astype(int)
     # Create a DataFrame
     data = pd.DataFrame({
-        'Patient ID': range(0, total_patients  ),
+        'Patient ID': range(total_patients),
         'Propensity Score': propensity_scores,
         'Treatment': treatment_assignment
     })
-    
-
     return data
-
 
 def main():
     logger = logging.getLogger('Main')
@@ -47,25 +44,12 @@ def main():
     total_patients = 100
     treated_patients = 20
     medical_data = generate_dataset(total_patients, treated_patients)
-    logger.debug(medical_data[medical_data['Treatment'] == 1])
-    matched_pairs = methods.nnm2(medical_data, replacement=1, caliper=0.02, k=1)
-
-    #logger.debug(f'length of matched pairs: {matched_pairs}')
+    matched_pairs = methods.nnm2(medical_data, replacement=True, caliper=0.02, k=1)
     
-    count = 1
-  
-    for row in matched_pairs:
-        logging.debug(f"{count}\n")
-        count += 1
-        logging.debug(f"Treated Patient:\n{row[0]},\nMatched Patient(s):\n{row[1]}\n")
-    output_file = "data\\output.txt"  # Output file
-
-    with open(output_file, "w") as f:
-        count = 0
+    output_file = "data\\output.csv"  # Output file
+    with open(output_file, "w") as f:      
         for row in matched_pairs:
-            
-            count += 1
             f.write(f"Treated Patient:\n{row[0]},\nMatched Patient(s):\n{row[1]}\n")
-        f.write(f"Total matched pairs: {count}\n")
+        f.write(f"Total matched pairs: {len(matched_pairs)}\n")
     logger.debug('======Finish======')
 
