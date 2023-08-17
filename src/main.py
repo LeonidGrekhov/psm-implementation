@@ -44,7 +44,7 @@ def main():
     total_patients = 100
     treated_patients = 20
     medical_data = generate_dataset(total_patients, treated_patients)
-    matched_pairs = methods.nnm2(medical_data, replacement=True, caliper=0.02, k=1)
+    matched_pairs = methods.nnm2(medical_data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
     
     output_file = "data\\output.csv"  # Output file
     with open(output_file, "w") as f:      
