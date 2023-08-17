@@ -53,7 +53,7 @@ def nnm2(medical_data: pd.DataFrame, replacement: bool, caliper: float, k_neighb
         matched_records = filtered_control_group.head(1)
         if replacement:
             control_group = control_group[~control_group[dd.patientID].isin(matched_records[dd.patientID])]
-        matched_records = pd.concat([matched_records, pd.DataFrame(treated_unit)])
+        matched_records = pd.concat([matched_records, treated_unit.to_frame().transpose()])
         all_matched_dfs.append(matched_records)
 
     all_matched_df = pd.concat(all_matched_dfs)
