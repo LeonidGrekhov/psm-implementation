@@ -46,8 +46,14 @@ def main():
     medical_data = generate_dataset(total_patients, treated_patients)
     matched_pairs = methods.nnm2(medical_data, replacement=True, caliper=0.02, k=1)
     
-    output_file = "data\\output.csv"  # Output file
-    with open(output_file, "w") as f:      
+    folder_name = "build"
+    file_name = "matched_pairs.txt"
+    if not os.path.exists(folder_name):
+        os.mkdir(folder_name)
+
+    file_path = os.path.join(folder_name, file_name)
+    
+    with open(file_path, "w") as f:      
         for row in matched_pairs:
             f.write(f"Treated Patient:\n{row[0]},\nMatched Patient(s):\n{row[1]}\n")
         f.write(f"Total matched pairs: {len(matched_pairs)}\n")
