@@ -1,2 +1,7 @@
+.idea/
 data
 build/
+/test.log
+__pycache__/
+*.pyc
+bfg.jar
