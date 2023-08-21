@@ -52,10 +52,11 @@ def main():
         os.mkdir(folder_name)
 
     file_path = os.path.join(folder_name, file_name)
-    
+    logger.debug(f'pairs" \n{matched_pairs}')
     with open(file_path, "w") as f:      
-        for row in matched_pairs:
-            f.write(f"Treated Patient:\n{row[0]},\nMatched Patient(s):\n{row[1]}\n")
+        
+        f.write(f"\nMatched Patient:\n{matched_pairs[::2]}\n")
+        f.write(f"\nTreated Patient(s):\n{matched_pairs[1::2]}\n")
         f.write(f"Total matched pairs: {len(matched_pairs)}\n")
     logger.debug('======Finish======')
 
