@@ -14,6 +14,8 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
 import src.util.methods as methods
+import src.util.LogisticRegression as LogisticRegression
+import src.util.DataGenerator as DataGenerator
 from scipy.spatial.distance import cdist
 
 
@@ -39,11 +41,24 @@ def generate_dataset(total_patients, treated_patients):
 def main():
     logger = logging.getLogger('Main')
     logger.debug('======Start======')
+    
     # Generate synthetic medical dataset with additional columns and binary outcome
     # Generate the dataset
-    total_patients = 100
-    treated_patients = 20
-    medical_data = generate_dataset(total_patients, treated_patients)
+    total_patients = 800
+    treated_patients = 200
+    num_params = 50
+    cat_params = 50
+    num_categories = 5
+    num_params_samples = 50
+    cat_params_samples = 50
+    
+    result_df = DataGenerator.generate_data(total_patients, treated_patients, num_params, cat_params, num_categories)
+    print(result_df) 
+    medical_data = LogisticRegression.LogRegress(result_df, num_params, num_params_samples, cat_params_samples)
+
+    
+    #medical_data = generate_dataset(total_patients, treated_patients)
+
     matched_pairs = methods.nnm2(medical_data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
     
     folder_name = "build"
@@ -52,11 +67,13 @@ def main():
         os.mkdir(folder_name)
 
     file_path = os.path.join(folder_name, file_name)
-    logger.debug(f'pairs" \n{matched_pairs}')
+    logger.debug(f'pairs: \n{matched_pairs}')
     with open(file_path, "w") as f:      
         
         f.write(f"\nMatched Patient:\n{matched_pairs[::2]}\n")
         f.write(f"\nTreated Patient(s):\n{matched_pairs[1::2]}\n")
         f.write(f"Total matched pairs: {len(matched_pairs)}\n")
+    
+    
     logger.debug('======Finish======')
 
