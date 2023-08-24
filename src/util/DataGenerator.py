@@ -7,7 +7,17 @@ logger = logging.getLogger(__name__)
 
 
 def generate_data(treated_count: int, untreated_count: int, num_params: int, cat_params: int, num_categories: int)  -> pd.DataFrame:
-    
+    """
+    Function generates a data set based on input parameters
+    :param treated_count: amount of treated patients
+    :param untreated_count: amount of untreated patients
+    :param num_params: number of numerical parameters (ie: age)
+    :param cat_params: number of categorical parameters (ie: race)
+    :param num_categories: number of categories to base the categorical parameters on
+    :return: pd.DataFrame: returns the data frame created by the method
+    """
+    logger.debug(f"LogRegress. treated_count {treated_count}, untreated_count: {untreated_count}, num_params: {num_params}, "
+                 f"cat_params {cat_params}, num_categories: {num_categories}")
     total_patients = treated_count + untreated_count
     # Generate random numerical parameters ranging from 0 to 1 million
     numerical_data = np.random.randint(0, 1000000, size=(treated_count + untreated_count, num_params))
@@ -26,12 +36,12 @@ def generate_data(treated_count: int, untreated_count: int, num_params: int, cat
     
     # Create a DataFrame
     data = np.concatenate((np.array(patient_ids).reshape(-1, 1), numerical_data, categorical_data), axis=1)
-    columns = ['Patient ID'] + num_columns + cat_columns
+    columns = [dd.patientID] + num_columns + cat_columns
     df = pd.DataFrame(data, columns=columns)
     
     # Add a column indicating treatment status
     treatment_assignment = (np.random.rand(total_patients) > 0.8).astype(int)
-    df['Treatment'] = treatment_assignment
+    df[dd.treatment] = treatment_assignment
     
     return df
 

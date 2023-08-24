@@ -14,14 +14,14 @@ logger = logging.getLogger(__name__)
 
 def nnm2(medical_data: pd.DataFrame, replacement: bool, caliper: float, k_neighbors: int, method: str) -> pd.DataFrame:
     """
-    Accepts dataframe with parameters of replacement, caliper and number of neighbors
+    Accepts data frame with parameters of replacement, caliper and number of neighbors
     returns a list of pairs (treated patient, untreated patient)
-    :param medical_data:
-    :param replacement:
-    :param caliper:
-    :param k_neighbors:
+    :param medical_data: data frame to be worked with  
+    :param replacement: bool value indicating if we with to use replacement to remove values from the control group after matching
+    :param caliper: the range in which we would like to include matched scores
+    :param k_neighbors: amount of neighbors we would like to sample
     :param method: possible values:"knn", "caliper". define which method for patient matching should be used
-    :return:
+    :return: returns augmented data frame with matches and psm score differences 
     """
     logger.debug(f"nnm2. medical data frame size {medical_data.shape}, replacement: {replacement}, caliper: {caliper}, "
                  f"k_neighbors {k_neighbors}")
