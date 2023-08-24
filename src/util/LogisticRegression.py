@@ -7,6 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -49,16 +50,26 @@ def LogRegress(medical_data: pd.DataFrame, num_params: int, num_params_samples: 
         logger.warning(f'Must select more than 0 columns to generate a psm score')
         sys.exit()
 
-    plot_enable = 0
+    plot_enable = 1
     if plot_enable:
         logging.getLogger('matplotlib.font_manager').disabled = True
         logging.getLogger('PIL.PngImagePlugin').disabled = True
         #Overlap Assessment (Propensity Score Distribution)
+        plt.figure()
         plt.hist(propensity_scores[medical_data[dd.treatment] == 0], alpha=.5, label='Control')
         plt.hist(propensity_scores[medical_data[dd.treatment] == 1], alpha=.5, label='Treated')      
         plt.xlabel('Propensity Score')
         plt.ylabel('Frequency')
         plt.legend()
         plt.title('Propensity Score Distribution')
-        plt.show()
+        # Specify the directory where you want to save the plot
+        save_directory = "build/"
+        # Generate a timestamp
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+
+        # Generate a file name with the timestamp
+        file_name = f'psm_dist_num_sample_{num_params_samples}_cat_sample_{cat_params_samples}_{timestamp}.png'
+
+        # Save the plot to the generated file name
+        plt.savefig(save_directory + file_name)
     return medical_data

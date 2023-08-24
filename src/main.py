@@ -58,27 +58,41 @@ def main():
     num_params = 50
     cat_params = 50
     num_categories = 5
-    num_params_samples = 1
-    cat_params_samples = 0
     
+    matched_pairs = pd.DataFrame()
     result_df = DataGenerator.generate_data(treated_patients, untreated_count, num_params, cat_params, num_categories)
     print(result_df) 
-    medical_data = LogisticRegression.LogRegress(result_df, num_params, num_params_samples, cat_params_samples)
-    matched_pairs = methods.nnm2(medical_data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
-    
+    #num_params_samples = 50
+    #cat_params_samples = 50
+    #medical_data = LogisticRegression.LogRegress(result_df, num_params, num_params_samples, cat_params_samples) 
+    #matched_pairs = methods.nnm2(medical_data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
+    samples = [(1, 0), (0, 1), (1, 1), (5, 0), (0, 5), (5, 5), (50, 0), (0, 50), (50, 50)]
+
+    for treatment in samples:
+        medical_data = LogisticRegression.LogRegress(result_df, num_params, *treatment)
+        matched_pairs_treatment = methods.nnm2(medical_data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
+        matched_pairs = pd.concat([matched_pairs, matched_pairs_treatment])
+       
+        
     folder_name = "build"
-    file_name = "matched_pairs.txt"
+    file_name = "matched_pairs.csv"
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
 
     file_path = os.path.join(folder_name, file_name)
     logger.debug(f'pairs: \n{matched_pairs}')
-    with open(file_path, "w") as f:      
-        
-        f.write(f"\nMatched Patient:\n{matched_pairs[::2]}\n")
-        f.write(f"\nTreated Patient(s):\n{matched_pairs[1::2]}\n")
-        f.write(f"Total matched pairs: {len(matched_pairs)}\n")
-    
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write("Matched Patient:\n")
+            #f.write(matched_pairs[::2].to_string(index=False) + "\n\n")
+            f.write(matched_pairs.to_string(index=False) + "\n\n")
+            f.write("Treated Patient(s):\n")
+            #f.write(matched_pairs[1::2].to_string(index=False) + "\n\n")
+            
+            f.write(f"Total matched pairs: {len(matched_pairs)}\n")
+            f.flush()
+    except Exception as e:
+        logger.error(f"An error occurred while writing to the file: {e}")
     
     logger.debug('======Finish======')
 

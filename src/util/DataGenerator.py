@@ -21,11 +21,11 @@ def generate_data(treated_count: int, untreated_count: int, num_params: int, cat
     total_patients = treated_count + untreated_count
     # Generate random numerical parameters ranging from 0 to 1 million
     numerical_data = np.random.randint(0, 1000000, size=(treated_count + untreated_count, num_params))
-    numerical_data = np.linspace(0, 1000000, num=numerical_data.size).reshape(numerical_data.shape).astype(int)
+    #numerical_data = np.linspace(0, 1000000, num=numerical_data.size).reshape(numerical_data.shape).astype(int)
     
     # Generate random categorical parameters with 5 categories
     categorical_data = np.random.randint(0, num_categories, size=(treated_count + untreated_count, cat_params))
-    categorical_data = np.linspace(0, 5, num=categorical_data.size).reshape(categorical_data.shape).astype(int)
+    #categorical_data = np.linspace(0, 5, num=categorical_data.size).reshape(categorical_data.shape).astype(int)
 
     # Create columns for numerical and categorical parameters
     num_columns = [f'num_param_{i+1}' for i in range(num_params)]
