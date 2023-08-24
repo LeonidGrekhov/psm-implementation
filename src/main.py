@@ -44,21 +44,26 @@ def main():
     
     # Generate synthetic medical dataset with additional columns and binary outcome
     # Generate the dataset
-    total_patients = 800
+    """
+    :param treated_count: amount of treated patients
+    :param untreated_count: amount of untreated patients
+    :param num_params: number of numerical parameters (ie: age)
+    :param cat_params: number of categorical parameters (ie: race)
+    :param num_categories: number of categories to base the categorical parameters on
+    :return: pd.DataFrame: returns the data frame created by the method
+    """
     treated_patients = 200
+    untreated_count = 800
+    
     num_params = 50
     cat_params = 50
     num_categories = 5
-    num_params_samples = 50
-    cat_params_samples = 50
+    num_params_samples = 1
+    cat_params_samples = 0
     
-    result_df = DataGenerator.generate_data(total_patients, treated_patients, num_params, cat_params, num_categories)
+    result_df = DataGenerator.generate_data(treated_patients, untreated_count, num_params, cat_params, num_categories)
     print(result_df) 
     medical_data = LogisticRegression.LogRegress(result_df, num_params, num_params_samples, cat_params_samples)
-
-    
-    #medical_data = generate_dataset(total_patients, treated_patients)
-
     matched_pairs = methods.nnm2(medical_data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
     
     folder_name = "build"
