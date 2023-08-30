@@ -67,11 +67,10 @@ def LogRegress(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFra
     selected = []
     parameters = parameters
     target = target
-    patientID = data.columns[[0]] 
-    selected += patientID.tolist() 
-    selected += parameters
-    selected += target
+    patientID = data.columns[0]
+    selected += [patientID] + parameters + target
     data_dict = {col: data[col] if col != dd.propensity_scores else psm for col in selected}
+
 
     # Create a new DataFrame from the dictionary
     new_df = pd.DataFrame(data_dict)
