@@ -12,23 +12,23 @@ from src.datamodel.Column import DataDictionary as dd
 logger = logging.getLogger(__name__)
 
 
-def nnm2(medical_data: pd.DataFrame, replacement: bool, caliper: float, k_neighbors: int, method: str) -> pd.DataFrame:
+def nnm2(data: pd.DataFrame, replacement: bool, caliper: float, k_neighbors: int, method: str) -> pd.DataFrame:
     """
     Accepts data frame with parameters of replacement, caliper and number of neighbors
     returns a list of pairs (treated patient, untreated patient)
-    :param medical_data: data frame to be worked with  
+    :param data: data frame to be worked with  
     :param replacement: bool value indicating if we with to use replacement to remove values from the control group after matching
     :param caliper: the range in which we would like to include matched scores
     :param k_neighbors: amount of neighbors we would like to sample
     :param method: possible values:"knn", "caliper". define which method for patient matching should be used
     :return: returns augmented data frame with matches and psm score differences 
     """
-    logger.debug(f"nnm2. medical data frame size {medical_data.shape}, replacement: {replacement}, caliper: {caliper}, "
+    logger.debug(f"nnm2. medical data frame size {data.shape}, replacement: {replacement}, caliper: {caliper}, "
                  f"k_neighbors {k_neighbors}")
 
     all_matched_dfs = []
-    treatment_group = medical_data[medical_data[dd.treatment] == 1]
-    control_group = medical_data[medical_data[dd.treatment] == 0]
+    treatment_group = data[data[dd.treatment] == 1]
+    control_group = data[data[dd.treatment] == 0]
     logger.debug(f'length of control group before execution  {len(control_group)}')
 
     for _, treated_unit in treatment_group.iterrows():
