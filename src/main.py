@@ -20,21 +20,6 @@ import src.util.DataGenerator as DataGenerator
 np.random.seed(42)
 
 
-def generate_dataset(total_patients, treated_patients):
-    # Generate random propensity scores between 0 and 1 for all patients
-    propensity_scores = np.random.rand(total_patients)
-
-    # Determine the treatment assignment (0 for control, 1 for treatment)
-    # treatment_assignment = np.random.choice([0, 1], size=total_patients, replace=True, p=[0.80, 0.20])
-    treatment_assignment = (np.random.rand(total_patients) > 0.8).astype(int)
-    # Create a DataFrame
-    data = pd.DataFrame({
-        'Patient ID': range(total_patients),
-        'Propensity Score': propensity_scores,
-        'Treatment': treatment_assignment
-    })
-    return data
-
 def main():
     logger = logging.getLogger('Main')
     logger.debug('======Start======')
@@ -59,17 +44,11 @@ def main():
     matched_pairs = pd.DataFrame()
     result_df = DataGenerator.generate_data(treated_patients, untreated_count, num_params, cat_params, num_categories)
     print(result_df) 
-    #num_params_samples = 50
-    #cat_params_samples = 50
-    #medical_data = LogisticRegression.LogRegress(result_df, num_params, num_params_samples, cat_params_samples) 
-    #matched_pairs = methods.nnm2(medical_data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
     samples = [(1, 0), (0, 1), (1, 1), (5, 0), (0, 5), (5, 5), (50, 0), (0, 50), (50, 50)]
-    '''
-    
-    '''
-    parameters = ['num_param_1', 'cat_param_1']
+
+ 
     target = [dd.treatment]
-    folder_name = "build"
+    folder_name = "build/"
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
     for treatment in samples:
@@ -123,14 +102,11 @@ def main():
             plt.legend()
             plt.title(f'Propensity Score Distribution (linspace){xLabel}')
             # Specify the directory where you want to save the plot
-            save_directory = "build/"
-            # Generate a timestamp
-            
 
             # Generate a file name with the timestamp
             file_name = f'match_numerical_{x}_categorical_{y}_{timestamp}.png'
 
             # Save the plot to the generated file name
-            plt.savefig(save_directory + file_name)
+            plt.savefig(folder_name + file_name)
     logger.debug('======Finish======')
 
