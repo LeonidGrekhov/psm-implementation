@@ -12,7 +12,7 @@ from src.datamodel.Column import DataDictionary as dd
 logger = logging.getLogger(__name__)
 
 
-def nnm2(data: pd.DataFrame, replacement: bool, caliper: float, k_neighbors: int, method: str) -> pd.DataFrame:
+def match_nearest_neighbors(data: pd.DataFrame, replacement: bool, caliper: float, k_neighbors: int, method: str) -> pd.DataFrame:
     """
     Accepts data frame with parameters of replacement, caliper and number of neighbors
     returns a list of pairs (treated patient, untreated patient)
@@ -23,7 +23,7 @@ def nnm2(data: pd.DataFrame, replacement: bool, caliper: float, k_neighbors: int
     :param method: possible values:"knn", "caliper". define which method for patient matching should be used
     :return: returns augmented data frame with matches and psm score differences 
     """
-    logger.debug(f"nnm2. medical data frame size {data.shape}, replacement: {replacement}, caliper: {caliper}, "
+    logger.debug(f"match_nearest_neighbors. medical data frame size {data.shape}, replacement: {replacement}, caliper: {caliper}, "
                  f"k_neighbors {k_neighbors}")
 
     all_matched_dfs = []

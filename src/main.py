@@ -19,7 +19,6 @@ import src.util.DataGenerator as DataGenerator
 # Set a random seed for reproducibility
 np.random.seed(42)
 
-
 def main():
     logger = logging.getLogger('Main')
     logger.debug('======Start======')
@@ -34,79 +33,21 @@ def main():
     :param num_categories: number of categories to base the categorical parameters on
     :return: pd.DataFrame: returns the data frame created by the method
     """
-    treated_patients = 200
-    untreated_count = 800
-    
-    num_params = 50
-    cat_params = 50
-    num_categories = 5
-    
-    matched_pairs = pd.DataFrame()
-    result_df = DataGenerator.generate_data(treated_patients, untreated_count, num_params, cat_params, num_categories)
-    print(result_df) 
-    samples = [(1, 0), (0, 1), (1, 1), (5, 0), (0, 5), (5, 5), (50, 0), (0, 50), (50, 50)]
-
- 
+    matched_df = pd.DataFrame()
+    result_df = DataGenerator.generate_data(treated_count = 200, untreated_count = 800, num_params = 50, cat_params = 50, num_categories = 5)
+    #cases is a selection mechanism that picks the numerical and categorical columns from the generated data frame
+    #(1, 0) represents 1 numerical column and one categorical, the rest follow this schema
+    cases = DataGenerator.generate_study_cases()
     target = [dd.treatment]
-    folder_name = "build/"
-    if not os.path.exists(folder_name):
-        os.mkdir(folder_name)
-    for treatment in samples:
+    for case in cases:
         #build the column labels to be passed to logistic regression for testing purposes
-        combined_column_names = []
-        x, y = treatment 
-        if x >  0:
-            selected_numerical_column_names = result_df.columns[1:x+1]
-            combined_column_names += selected_numerical_column_names.tolist()
-        if y > 0:
-            selected_categorical_column_names = result_df.columns[num_params+1:y+51]
-            combined_column_names += selected_categorical_column_names.tolist()
-        # Combine both sets of column names
-        #create a file for each sample combination
-        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        file_name = f'match_numerical_{x}_categorical_{y}_{timestamp}.csv'
-        file_path = os.path.join(folder_name, file_name)
-        #calculate psm scores and return a new dataframe of just the sample columns with patient id and psm scores
+        combined_column_names = DataGenerator.filter_data(result_df, case, num_params=50)
+        #calculate psm scores and return a new data frame of just the sample columns with patient id and psm scores
         data = LogReg.LogRegress(result_df, combined_column_names, target)
         #calculate the pairs and save them to file
-        matched_pairs = methods.nnm2(data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
-        
-        logger.debug(f'pairs: \n{matched_pairs}')
-        try:
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write("Matched Patient:\n")
-                f.write(matched_pairs.to_string(index=False) + "\n\n")
-                f.write(f"Total matched pairs: {len(matched_pairs)}\n")
-                f.flush()
-        except Exception as e:
-            logger.error(f"An error occurred while writing to the file: {e}")
-
-
-        plot_enable = 1
-        control_group = data[data[dd.treatment] == 0]
-        treatment_group = data[data[dd.treatment] == 1]
-
-        # Plot histograms of PSM scores for control and treatment groups
-        
-        if plot_enable:
-            logging.getLogger('matplotlib.font_manager').disabled = True
-            logging.getLogger('PIL.PngImagePlugin').disabled = True
-            #Overlap Assessment (Propensity Score Distribution)
-            timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-            xLabel = f'\nParameters {len(combined_column_names)} target {target}'
-            plt.figure()
-            plt.hist(control_group[dd.propensity_scores], bins=20, alpha=0.5, color='blue', label='Control Group')
-            plt.hist(treatment_group[dd.propensity_scores], bins=20, alpha=0.5, color='orange', label='Treatment Group')    
-            plt.xlabel('Propensity Score')
-            plt.ylabel('Frequency')
-            plt.legend()
-            plt.title(f'Propensity Score Distribution (linspace){xLabel}')
-            # Specify the directory where you want to save the plot
-
-            # Generate a file name with the timestamp
-            file_name = f'match_numerical_{x}_categorical_{y}_{timestamp}.png'
-
-            # Save the plot to the generated file name
-            plt.savefig(folder_name + file_name)
+        matched_df = methods.match_nearest_neighbors(data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
+        DataGenerator.save_dataset(matched_df, case)
+        #plot the data
+        DataGenerator.build_plot(data, combined_column_names, target, case)
     logger.debug('======Finish======')
 
