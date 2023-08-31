@@ -34,33 +34,18 @@ def LogRegress(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFra
         psm = model.predict_proba(X)[:, 1]
         logger.debug(f'number of propensity_scores: {len(psm_test)}')
         data[dd.propensity_scores] = psm
-        
-
-        y_pred_train = (psm_train > 0.5).astype(int)
         y_pred_test = (psm_test > 0.5).astype(int)
 
-        # Calculate accuracy on the test set
-        accuracy_train = accuracy_score(y_train, y_pred_train)
-        accuracy_test = accuracy_score(y_test, y_pred_test)
-
-        precision_train = precision_score(y_train, y_pred_train)
-        precision_test = precision_score(y_test, y_pred_test)
-
-        recall_train = recall_score(y_train, y_pred_train)
-        recall_test = recall_score(y_test, y_pred_test)
-
-        f1_train = f1_score(y_train, y_pred_train)
-        f1_test = f1_score(y_test, y_pred_test)
-        
-
-        logger.debug(f"Training Accuracy: {accuracy_train}", )
-        logger.debug(f"Testing Accuracy: {accuracy_test}", )
-        logger.debug(f"Training Precision: {precision_train}", )
-        logger.debug(f"Testing Precision: {precision_test}", )
-        logger.debug(f"Training Recall: {recall_train}", )
-        logger.debug(f"Testing Recall: {recall_test}", )
-        logger.debug(f"Training F1 Score: {f1_train}", )
-        logger.debug(f"Testing F1 Score: {f1_test}", )
+        # Calculate metrics
+        metrics_dict = {
+            'Metric': ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
+            'Testing': [accuracy_score(y_test, y_pred_test), precision_score(y_test, y_pred_test),
+                        recall_score(y_test, y_pred_test), f1_score(y_test, y_pred_test)]
+        }
+        # Create a DataFrame
+        metrics_df = pd.DataFrame(metrics_dict)
+        # Log the DataFrame
+        logger.debug(metrics_df)
     else:
         logger.warning(f'Must select more than 0 columns to generate a psm score')
         sys.exit()
@@ -76,4 +61,4 @@ def LogRegress(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFra
     new_df = pd.DataFrame(data_dict)
     new_df[dd.propensity_scores] = psm
 
-    return new_df
+    return new_df, metrics_df

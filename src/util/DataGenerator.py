@@ -9,48 +9,65 @@ from src.datamodel.Column import DataDictionary as dd
 
 logger = logging.getLogger(__name__)
 
-
-def generate_data(treated_count: int, untreated_count: int, num_params: int, cat_params: int, num_categories: int)  -> pd.DataFrame:
+def generate_data(n_records: int, treatment_rate: float, n_params: int, numeric_params_rate: float, max_categories_n: int, ordered_cat_rate: float)  -> pd.DataFrame:
     """
     Function generates a data set based on input parameters
-    :param treated_count: amount of treated patients
-    :param untreated_count: amount of untreated patients
-    :param num_params: number of numerical parameters (ie: age)
-    :param cat_params: number of categorical parameters (ie: race)
-    :param num_categories: number of categories to base the categorical parameters on
-    :return: pd.DataFrame: returns the data frame created by the method
+    :param n_records: int # number of all records
+    :param treatment_rate: float # [0,1] percentage of treated patients (i.e. 0.2 means 20% of all records will be treated)
+    :param n_params: int # number of columns
+    :param numeric_params_rate: float # [0,1] percentage of numerical columns
+    :param max_categories_n: int # maximal number of categories each categorical parameter may have
+    :param ordered_cat_rate: float
     """
-    logger.debug(f"DataGenerator. treated_count {treated_count}, untreated_count: {untreated_count}, num_params: {num_params}, "
-                 f"cat_params {cat_params}, num_categories: {num_categories}")
-    total_patients = treated_count + untreated_count
-    # Generate random numerical parameters ranging from 0 to 1 million
-    numerical_data = np.random.randint(0, 1000000, size=(total_patients, num_params))
-    #numerical_data = np.linspace(0, 1000000, num=numerical_data.size).reshape(numerical_data.shape).astype(int)
+    logger.debug(f"DataGenerator. n_records {n_records}, treatment_rate: {treatment_rate}, n_params: {n_params}, "
+                 f"numeric_params_rate {numeric_params_rate}, max_categories_n: {max_categories_n}, ordered_cat_rate: {ordered_cat_rate}")
+    num_params, cat_params = round(n_params * numeric_params_rate), round(n_params * (1 - numeric_params_rate))
     
-    # Generate random categorical parameters with 5 categories
-    categorical_data = np.random.randint(0, num_categories, size=(total_patients, cat_params))
-    #categorical_data = np.linspace(0, 5, num=categorical_data.size).reshape(categorical_data.shape).astype(int)
-
-    # Create columns for numerical and categorical parameters
+    # Calculate the number of ordered categorical and one-hot encoded categorical parameters
+    ordered_cat_count = round(cat_params * ordered_cat_rate)
+    one_hot_cat_count = cat_params - ordered_cat_count
+    
+    # Generate random numerical parameters ranging from 0 to 1 million
+    numerical_data = np.random.randint(0, 1000000, size=(n_records, num_params))
+    
+    # Generate ordered categorical data for ordered_cat_count columns
+    ordered_categorical_data = np.random.randint(1, max_categories_n + 1, size=(n_records, ordered_cat_count))
+    
+    # Generate random categorical data for one_hot_cat_count columns
+    one_hot_categorical_data = np.random.randint(0, max_categories_n, size=(n_records, one_hot_cat_count))
+    
+    # Create column names for numerical, ordered categorical, and one-hot categorical parameters
     num_columns = [f'num_param_{i+1}' for i in range(num_params)]
-    cat_columns = [f'cat_param_{i+1}' for i in range(cat_params)]
+    ordered_cat_columns = [f'ordered_cat_param_{i+1}' for i in range(ordered_cat_count)]
+    one_hot_cat_columns = [f'one_hot_cat_param_{i+1}' for i in range(one_hot_cat_count)]
     
     # Add patient IDs
-    patient_ids = [f'Patient_{i+1}' for i in range(total_patients)]
+    patient_ids = [f'Patient_{i+1}' for i in range(n_records)]
     
-    # Create a DataFrame
-    data = np.concatenate((np.array(patient_ids).reshape(-1, 1), numerical_data, categorical_data), axis=1)
-    columns = [dd.patientID] + num_columns + cat_columns
+    # Combine ordered categorical and one-hot categorical data with patient IDs and numerical data
+    cat_df = pd.DataFrame(ordered_categorical_data, columns=ordered_cat_columns)
+    
+    # Perform one-hot encoding on the one-hot categorical data
+    one_hot_df = pd.get_dummies(pd.DataFrame(one_hot_categorical_data, columns=one_hot_cat_columns), columns=one_hot_cat_columns)
+    
+    # Convert True/False values to 1/0
+    one_hot_df = one_hot_df.astype(int)
+    logger.debug(f'one hot encoding \n{one_hot_df}')
+    # Combine all data
+    data = np.concatenate((np.array(patient_ids).reshape(-1, 1), numerical_data, cat_df, one_hot_df), axis=1)
+    columns = [dd.patientID] + num_columns + ordered_cat_columns + one_hot_df.columns.tolist()
+    
+    # Create the DataFrame
     df = pd.DataFrame(data, columns=columns)
     
     # Add a column indicating treatment status
-    treatment_assignment = (np.random.rand(total_patients) > 0.8).astype(int)
+    treatment_assignment = (np.random.rand(n_records) < treatment_rate).astype(int)
     df[dd.treatment] = treatment_assignment
     
-    return df
+    return df    
 
 def generate_study_cases():
-    cases =[(1, 0), (0, 1), (1, 1), (5, 0), (0, 5), (5, 5), (50, 0), (0, 50), (50, 50)]
+    cases =[(1, 0), (0, 1), (1, 1), (5, 0), (0, 5), (5, 5), (50, 0), (0, 50), (50, 70)]
     return cases
 def filter_data(df, case, num_params):
     combined_column_names = []

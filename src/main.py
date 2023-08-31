@@ -34,7 +34,8 @@ def main():
     :return: pd.DataFrame: returns the data frame created by the method
     """
     matched_df = pd.DataFrame()
-    result_df = DataGenerator.generate_data(treated_count = 200, untreated_count = 800, num_params = 50, cat_params = 50, num_categories = 5)
+    #result_df = DataGenerator.generate_data(treated_count = 200, untreated_count = 800, num_params = 50, cat_params = 50, num_categories = 5)
+    result_df = DataGenerator.generate_data(n_records=1000, treatment_rate=0.2, n_params=100, numeric_params_rate=0.5, max_categories_n=5, ordered_cat_rate=0.3)
     #cases is a selection mechanism that picks the numerical and categorical columns from the generated data frame
     #(1, 0) represents 1 numerical column and one categorical, the rest follow this schema
     cases = DataGenerator.generate_study_cases()
@@ -43,9 +44,10 @@ def main():
         #build the column labels to be passed to logistic regression for testing purposes
         combined_column_names = DataGenerator.filter_data(result_df, case, num_params=50)
         #calculate psm scores and return a new data frame of just the sample columns with patient id and psm scores
-        data = LogReg.LogRegress(result_df, combined_column_names, target)
+        data, metrics_df = LogReg.LogRegress(result_df, combined_column_names, target)
         #calculate the pairs and save them to file
         matched_df = methods.match_nearest_neighbors(data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
+        matched_df = pd.concat([matched_df, metrics_df], ignore_index=True)
         DataGenerator.save_dataset(matched_df, case)
         #plot the data
         DataGenerator.build_plot(data, combined_column_names, target, case)
