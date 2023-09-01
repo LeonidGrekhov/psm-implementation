@@ -36,6 +36,8 @@ def main():
     matched_df = pd.DataFrame()
     #result_df = DataGenerator.generate_data(treated_count = 200, untreated_count = 800, num_params = 50, cat_params = 50, num_categories = 5)
     result_df = DataGenerator.generate_data(n_records=1000, treatment_rate=0.2, n_params=100, numeric_params_rate=0.5, max_categories_n=5, ordered_cat_rate=0.3)
+    file_path = os.path.join(FP.build_path, 'result_df')
+    result_df.to_csv(file_path, index=False)
     #cases is a selection mechanism that picks the numerical and categorical columns from the generated data frame
     #(1, 0) represents 1 numerical column and one categorical, the rest follow this schema
     cases = DataGenerator.generate_study_cases()
