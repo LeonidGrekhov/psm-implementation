@@ -1,5 +1,6 @@
-build_path = "build"
-config_path = "config"
+build_path = "build/"
+config_path = "config/"
+data_path = "data/"
 data_archive_dir = 'data_arch'
 
 
