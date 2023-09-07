@@ -11,13 +11,8 @@ import matplotlib.pyplot as plt
 import datetime
 
 logger = logging.getLogger(__name__)
-#def LogRegress(data: pd.DataFrame, num_params: int, num_params_samples: int, cat_params_samples: int) -> pd.DataFrame:
-def psm_scorer(treatment_labels, propensity_scores, response_variable):
-    # Calculate the weighted mean difference in response_variable
-    weighted_diff = np.sum((treatment_labels * propensity_scores - (1 - treatment_labels) * (1 - propensity_scores)) * response_variable) / np.sum(treatment_labels * propensity_scores + (1 - treatment_labels) * (1 - propensity_scores))
 
-    return weighted_diff
-def svm_for_psm(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
+def svm_for_psm(data: pd.DataFrame, parameters: list, target: list, constant: float, kernelMethod: str) -> pd.DataFrame:
     """
     Function preforms on provided data frame and returns psm scores for said data frame
     :param data: data frame generated earlier by DataGenerator.py
@@ -38,7 +33,7 @@ def svm_for_psm(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFr
     X_test_std = sc.transform(X_test)
     if not X.empty:
         # Train an SVM model
-        svm_model = svm.SVC(probability=True, kernel='rbf') #poly, rbf, sigmoid
+        svm_model = svm.SVC(C=constant, random_state=1, probability=True, kernel=kernelMethod) #poly, rbf, sigmoid
         svm_model.fit(X_train, y_train)
 
         # Predict propensity scores

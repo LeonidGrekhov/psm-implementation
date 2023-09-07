@@ -44,7 +44,7 @@ def main():
         #build the column labels to be passed to logistic regression for testing purposes
         combined_column_names = DataGenerator.filter_data(result_df, case, num_params=50)
         #calculate psm scores and return a new data frame of just the sample columns with patient id and psm scores
-        data, metrics_df = SvmPsmModel.svm_for_psm(result_df, combined_column_names, target)
+        data, metrics_df = SvmPsmModel.svm_for_psm(result_df, combined_column_names, target, constant=1.0, kernelMethod='rbf')#kernelMethod = poly, rbf, sigmoid
         #data, metrics_df = LogReg.LogRegress(result_df, combined_column_names, target)
         #calculate the pairs and save them to file
         matched_df = methods.match_nearest_neighbors(data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
