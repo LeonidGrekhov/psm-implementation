@@ -24,8 +24,9 @@ def svm_for_psm(data: pd.DataFrame, parameters: list, target: list, constant: fl
     
     X = data[parameters]
     y = data[target]
-    logger.debug(f'X scores: {X}')
-    logger.debug(f'Y scores: {y}')
+    y = y.values.ravel()
+    #logger.debug(f'X scores: {X}')
+    #logger.debug(f'Y scores: {y}')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     sc = StandardScaler()
     sc.fit(X_train)
