@@ -6,6 +6,7 @@ from src.datamodel.Column import DataDictionary as dd
 from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import datetime
 
@@ -31,15 +32,19 @@ def svm_for_psm(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFr
     logger.debug(f'X scores: {X}')
     logger.debug(f'Y scores: {y}')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
+    sc = StandardScaler()
+    sc.fit(X_train)
+    X_train_std = sc.transform(X_train)
+    X_test_std = sc.transform(X_test)
     if not X.empty:
         # Train an SVM model
-        svm_model = svm.SVC(probability=True)
+        svm_model = svm.SVC(probability=True, kernel='rbf') #poly, rbf, sigmoid
         svm_model.fit(X_train, y_train)
 
         # Predict propensity scores
         propensity_scores = svm_model.predict_proba(X_test)[:, 1]  # Probability of being treated
         psm = svm_model.predict_proba(X)[:, 1]
+        
         logger.debug(f'number of propensity_scores: {len(propensity_scores)}')
         logger.debug("PSM propensity_scores:", propensity_scores)
         # Calculate the PSM score (absolute difference in propensity scores)
