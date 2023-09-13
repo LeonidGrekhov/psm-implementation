@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 
 
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ def random_for_psm(data: pd.DataFrame, parameters: list, target: list) -> pd.Dat
         #logger.debug(f'X scores: {X}')
         #logger.debug(f'Y scores: {y}')
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        sc = StandardScaler()
+        sc = MinMaxScaler()
         sc.fit(X_train)
         X_train_std = sc.transform(X_train)
         X_test_std = sc.transform(X_test)

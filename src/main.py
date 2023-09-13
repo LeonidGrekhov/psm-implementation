@@ -51,8 +51,8 @@ def main():
         #calculate the pairs and save them to file
         matched_df = methods.match_nearest_neighbors(data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
         matched_df = pd.concat([matched_df, metrics_df], ignore_index=True)
-        DataGenerator.save_dataset(matched_df, case)
+        DataGenerator.save_dataset(matched_df, case, randomForestPSMModel.__name__)
         #plot the data
-        DataGenerator.build_plot(data, combined_column_names, target, case)
+        DataGenerator.build_plot(data, combined_column_names, target, case, randomForestPSMModel.__name__)
     logger.debug('======Finish======')
 
