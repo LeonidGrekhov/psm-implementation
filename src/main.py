@@ -12,6 +12,7 @@ from src.datamodel.Column import DataDictionary as dd
 
 import src.util.methods as methods
 import src.util.LogReg as LogReg
+import src.util.neuralNetwork as neuralNetwork
 import src.util.DataGenerator as DataGenerator
 
 
@@ -46,7 +47,8 @@ def main():
         #build the column labels to be passed to logistic regression for testing purposes
         combined_column_names = DataGenerator.filter_data(result_df, case, num_params=50)
         #calculate psm scores and return a new data frame of just the sample columns with patient id and psm scores
-        data, metrics_df = LogReg.LogRegress(result_df, combined_column_names, target)
+        #data, metrics_df = LogReg.LogRegress(result_df, combined_column_names, target)
+        data, metrics_df = neuralNetwork.nnModel(result_df, combined_column_names, target)
         #calculate the pairs and save them to file
         matched_df = methods.match_nearest_neighbors(data, replacement=True, caliper=0.02, k_neighbors=1, method='caliper')
         matched_df = pd.concat([matched_df, metrics_df], ignore_index=True)

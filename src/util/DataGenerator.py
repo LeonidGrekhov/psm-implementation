@@ -42,7 +42,7 @@ def generate_data(n_records: int, treatment_rate: float, n_params: int, numeric_
     one_hot_cat_columns = [f'one_hot_cat_param_{i+1}' for i in range(one_hot_cat_count)]
     
     # Add patient IDs
-    patient_ids = [f'Patient_{i+1}' for i in range(n_records)]
+    patient_ids = [f'{i+1}' for i in range(n_records)]
     
     # Combine ordered categorical and one-hot categorical data with patient IDs and numerical data
     cat_df = pd.DataFrame(ordered_categorical_data, columns=ordered_cat_columns)
@@ -100,7 +100,7 @@ def build_plot(data: pd.DataFrame, combined_column_names: list, target, case):
     # Specify the directory where you want to save the plot
 
     # Generate a file name with the timestamp
-    file_name = f'match_numerical_{x}_categorical_{y}_{timestamp}.png'
+    file_name = f'nn_{x}_categorical_{y}_{timestamp}.png'
 
     # Save the plot to the generated file name
     plt.savefig(folder_name + file_name)
@@ -112,7 +112,7 @@ def save_dataset(matched_df: pd.DataFrame, case):
         os.mkdir(folder_name)
     x, y = case
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    file_name = f'match_numerical_{x}_categorical_{y}_{timestamp}.csv'
+    file_name = f'nn_{x}_categorical_{y}_{timestamp}.csv'
     file_path = os.path.join(folder_name, file_name)
     try:
         matched_df.to_csv(file_path, index=False)
