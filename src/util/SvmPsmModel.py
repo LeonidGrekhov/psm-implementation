@@ -60,7 +60,7 @@ def svm_for_psm(data: pd.DataFrame, parameters: list, target: list, constant: fl
         logger.debug("PSM propensity_scores:", propensity_scores)
         # Calculate the PSM score (absolute difference in propensity scores)
         
-        y_pred_test = (propensity_scores > 0.19).astype(int)
+        y_pred_test = (propensity_scores > 0.5).astype(int)
         logger.debug("PSM y_pred_test:", y_pred_test)
         # Calculate metrics
         metrics_dict = {
