@@ -49,9 +49,7 @@ def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
         logger.debug(f'number of propensity_scores: {len(psm_test)}')
         data[dd.propensity_scores] = psm
         y_pred_test = (psm_test > 0.5).astype(int)
-        # Calculate the area under the ROC curve (AUC) to evaluate the propensity score model
-        auc = roc_auc_score(y_test, propensity_scores)
-        print(f"AUC: {auc:.2f}")
+        
         metrics_dict = {
             'Metric': ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
             'Testing': [accuracy_score(y_test, y_pred_test), precision_score(y_test, y_pred_test),
@@ -82,10 +80,13 @@ def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
 def create_model(input_dim):
     model = tf.keras.Sequential([
         tf.keras.layers.Input(shape=(input_dim,)),
-        tf.keras.layers.Dense(128, activation='relu'),
-        tf.keras.layers.Dropout(0.3),  # Add dropout layer to reduce overfitting
-        tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dense(32, activation='relu'),
+        tf.keras.layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(0.5),
+        tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(0.5),
+        tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
         tf.keras.layers.Dense(1, activation='sigmoid')
     ])
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
