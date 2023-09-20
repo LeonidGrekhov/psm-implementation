@@ -1,4 +1,4 @@
 class DataDictionary:
-    treatment = "Treatment"
-    patientID = "Patient ID"
+    treatment = "treatment"
+    patientID = "patient_id"
     propensity_scores = "Propensity Score"

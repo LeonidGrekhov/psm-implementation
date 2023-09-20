@@ -6,6 +6,7 @@ import os
 import matplotlib.pyplot as plt
 import src.util.FileProvider as FP
 from src.datamodel.Column import DataDictionary as dd
+from sklearn.preprocessing import LabelEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -65,9 +66,11 @@ def generate_data(n_records: int, treatment_rate: float, n_params: int, numeric_
     df[dd.treatment] = treatment_assignment
     
     return df    
-
+def import_data(path:str):
+    df = pd.read_csv(path)
+    return df
 def generate_study_cases():
-    cases =[(1, 0), (0, 1), (1, 1), (5, 0), (0, 5), (5, 5), (50, 0), (0, 50), (50, 70)]
+    cases = [(1, 0)]
     return cases
 def filter_data(df, case, num_params):
     combined_column_names = []
@@ -80,6 +83,19 @@ def filter_data(df, case, num_params):
         selected_categorical_column_names = df.columns[num_params+1:y+51]
         combined_column_names += selected_categorical_column_names.tolist()
     return combined_column_names
+
+def encode_import_data(df):
+    label_encoder = LabelEncoder()
+
+    # Apply label encoding to 'sex', 'race', and 'ethnicity' columns
+    #df['patient_id'] = label_encoder.fit_transform(df['patient_id'])
+    df['patient_id'] = df['patient_id'].str.extract('(\d+)').astype(int)
+    df['sex'] = label_encoder.fit_transform(df['sex'])
+    df['race'] = label_encoder.fit_transform(df['race'])
+    df['ethnicity'] = label_encoder.fit_transform(df['ethnicity'])
+    
+    return df
+
 def build_plot(data: pd.DataFrame, combined_column_names: list, target, case):
     x, y = case
     folder_name = FP.build_path
