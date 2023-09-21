@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import logging.config
 import sys
+import random
 from src.datamodel.Column import DataDictionary as dd
 import tensorflow as tf
 from tensorflow import keras
@@ -10,11 +11,17 @@ from sklearn.metrics import roc_auc_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
+import datetime
+import src.util.FileProvider as FP
 logger = logging.getLogger(__name__)
 
 def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
     numeric_columns = data.select_dtypes(include=['object']).columns
 
+    # Set random seeds for TensorFlow and NumPy
+    tf.random.set_seed(42)
+    np.random.seed(42)
+    random.seed(42)
 # Convert selected columns to numeric
     data[numeric_columns] = data[numeric_columns].apply(pd.to_numeric, errors='coerce')
 
@@ -52,6 +59,7 @@ def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
         plt.xlabel('Epochs')
         plt.ylabel('Loss')
         plt.legend()
+        
 
         plt.subplot(1, 2, 2)
         plt.plot(history.history['accuracy'], label='Training Accuracy')
@@ -59,9 +67,13 @@ def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
         plt.xlabel('Epochs')
         plt.ylabel('Accuracy')
         plt.legend()
+         
+        folder_name = FP.build_path
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        file_name = f'nn_accuracy_plot_{timestamp}.png'
 
-        plt.show()
-
+            # Save the plot to the generated file name
+        plt.savefig(folder_name + file_name)
 
         # Evaluate the model on test data
         y_pred = model.predict(X_test)
@@ -71,13 +83,11 @@ def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
         # Print the best hyperparameters
         #print(f"Best: {grid_result.best_params_}, Score: {grid_result.best_score_}")
 
-
         # Make predictions on the test set
-        propensity_scores = model.predict(X_test).flatten()
-        logger.debug(f'number of propensity_scores with flatten: {len(propensity_scores)} psm scores: {propensity_scores}')
+        
         psm_test = model.predict(X_test)
         psm = model.predict(X)
-        logger.debug(f'number of propensity_scores: {len(psm_test)} psm scores: {psm_test}')
+        logger.debug(f'number of propensity_scores: {len(psm_test)}')
         data[dd.propensity_scores] = psm
         y_pred_test = (psm_test > 0.5).astype(int)
         
@@ -111,13 +121,21 @@ def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
 def create_model(input_dim):
     model = tf.keras.Sequential([
         tf.keras.layers.Input(shape=(input_dim,)),
-        tf.keras.layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+        tf.keras.layers.Dense(512, activation='relu', kernel_initializer='glorot_normal'),
         tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.5),
-        tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dense(256, activation='relu', kernel_initializer='glorot_normal'),
         tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.5),
-        tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dense(128, activation='relu', kernel_initializer='glorot_normal'),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dense(64, activation='relu', kernel_initializer='glorot_normal'),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dense(32, activation='relu', kernel_initializer='glorot_normal'),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(0.5, seed=42),
         tf.keras.layers.Dense(1, activation='sigmoid')
     ])
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
