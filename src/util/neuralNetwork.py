@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import GridSearchCV
+import matplotlib.pyplot as plt
 logger = logging.getLogger(__name__)
 
 def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
@@ -31,22 +32,52 @@ def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
         }
 
         # Create the neural network model as a function
-        neural_network = tf.keras.wrappers.scikit_learn.KerasClassifier(build_fn=create_model, input_dim=X_train.shape[1], verbose=0)
+        #neural_network = tf.keras.wrappers.scikit_learn.KerasClassifier(build_fn=create_model, input_dim=X_train.shape[1], verbose=0)
 
         # Perform grid search
-        model = GridSearchCV(estimator=neural_network, param_grid=param_grid, cv=3)
-        grid_result = model.fit(X_train, y_train)
+        #model = GridSearchCV(estimator=neural_network, param_grid=param_grid, cv=3)
+        #grid_result = model.fit(X_train, y_train)
+        # Create the model
+        input_dim = X_train.shape[1]
+        model = create_model(input_dim)
+        # Train the model with early stopping based on validation loss
+        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+        history = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=100, batch_size=64, callbacks=[early_stopping])
+
+        # Plot training and validation loss and accuracy
+        plt.figure(figsize=(12, 4))
+        plt.subplot(1, 2, 1)
+        plt.plot(history.history['loss'], label='Training Loss')
+        plt.plot(history.history['val_loss'], label='Validation Loss')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.legend()
+
+        plt.subplot(1, 2, 2)
+        plt.plot(history.history['accuracy'], label='Training Accuracy')
+        plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+        plt.xlabel('Epochs')
+        plt.ylabel('Accuracy')
+        plt.legend()
+
+        plt.show()
+
+
+        # Evaluate the model on test data
+        y_pred = model.predict(X_test)
+        roc_auc = roc_auc_score(y_test, y_pred)
+        print(f"AUC-ROC on test data: {roc_auc:.4f}")
 
         # Print the best hyperparameters
-        print(f"Best: {grid_result.best_params_}, Score: {grid_result.best_score_}")
+        #print(f"Best: {grid_result.best_params_}, Score: {grid_result.best_score_}")
 
 
         # Make predictions on the test set
         propensity_scores = model.predict(X_test).flatten()
-        
+        logger.debug(f'number of propensity_scores with flatten: {len(propensity_scores)} psm scores: {propensity_scores}')
         psm_test = model.predict(X_test)
         psm = model.predict(X)
-        logger.debug(f'number of propensity_scores: {len(psm_test)}')
+        logger.debug(f'number of propensity_scores: {len(psm_test)} psm scores: {psm_test}')
         data[dd.propensity_scores] = psm
         y_pred_test = (psm_test > 0.5).astype(int)
         
