@@ -1,18 +1,17 @@
-import datetime
-import json
 import logging
 import logging.config
 import os
-import datetime
-import src.util.FileProvider as FP
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from src.datamodel.Column import DataDictionary as dd
 
+import matplotlib.pyplot as plt
+from src.util import FileProvider as FP
+from src.datamodel.Column import DataDictionary as dd
+import src.util.randomForestPSMModel as randomForestPSMModel
 import src.util.methods as methods
 import src.util.LogReg as LogReg
 import src.util.neuralNetwork as neuralNetwork
+import src.util.SvmPsmModel as SvmPsmModel
 import src.util.DataGenerator as DataGenerator
 
 
@@ -52,13 +51,18 @@ def main():
         #combined_column_names = DataGenerator.filter_data(result_df, case, num_params=50)
         combined_column_names = ['sex','race','ethnicity','age','bmi_val']
         #calculate psm scores and return a new data frame of just the sample columns with patient id and psm scores
+
         #data, metrics_df = LogReg.LogRegress(result_df, combined_column_names, target)
         data, metrics_df = neuralNetwork.nnModel(result_df, combined_column_names, target)
+        #data, metrics_df = randomForestPSMModel.random_for_psm(result_df, combined_column_names, target)
+        #data, metrics_df = SvmPsmModel.svm_for_psm(result_df, combined_column_names, target, constant=1.0, kernelMethod='rbf')#kernelMethod = poly, rbf, sigmoid
+        #data, metrics_df = LogReg.LogRegress(result_df, combined_column_names, target)
+
         #calculate the pairs and save them to file
         matched_df = methods.match_nearest_neighbors(data, replacement=True, caliper=0.5, k_neighbors=1, method='caliper')
         matched_df = pd.concat([matched_df, metrics_df], ignore_index=True)
-        DataGenerator.save_dataset(matched_df, case)
+        DataGenerator.save_dataset(matched_df, case, randomForestPSMModel.__name__)
         #plot the data
-        DataGenerator.build_plot(data, combined_column_names, target, case)
+        DataGenerator.build_plot(data, combined_column_names, target, case, randomForestPSMModel.__name__)
     logger.debug('======Finish======')
 

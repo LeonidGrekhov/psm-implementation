@@ -84,6 +84,7 @@ def filter_data(df, case, num_params):
         combined_column_names += selected_categorical_column_names.tolist()
     return combined_column_names
 
+
 def encode_import_data(df):
     label_encoder = LabelEncoder()
 
@@ -97,6 +98,7 @@ def encode_import_data(df):
     return df
 
 def build_plot(data: pd.DataFrame, combined_column_names: list, target, case):
+
     x, y = case
     folder_name = FP.build_path
     control_group = data[data[dd.treatment] == 0]
@@ -112,23 +114,28 @@ def build_plot(data: pd.DataFrame, combined_column_names: list, target, case):
     plt.xlabel('Propensity Score')
     plt.ylabel('Frequency')
     plt.legend()
-    plt.title(f'Propensity Score Distribution (linspace){xLabel}')
+    plt.title(f'Propensity Score Distribution {xLabel}')
     # Specify the directory where you want to save the plot
 
     # Generate a file name with the timestamp
+
     file_name = f'nn_{x}_categorical_{y}_{timestamp}.png'
+
 
     # Save the plot to the generated file name
     plt.savefig(folder_name + file_name)
     return
-def save_dataset(matched_df: pd.DataFrame, case):
+def save_dataset(matched_df: pd.DataFrame, case, name):
     #create a file for each sample combination
     folder_name = FP.build_path
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
     x, y = case
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+
     file_name = f'nn_{x}_categorical_{y}_{timestamp}.csv'
+
+
     file_path = os.path.join(folder_name, file_name)
     try:
         matched_df.to_csv(file_path, index=False)
