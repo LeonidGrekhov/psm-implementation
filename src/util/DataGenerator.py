@@ -93,8 +93,13 @@ def encode_import_data(df):
     df['sex'] = label_encoder.fit_transform(df['sex'])
     df['race'] = label_encoder.fit_transform(df['race'])
     df['ethnicity'] = label_encoder.fit_transform(df['ethnicity'])
+    encoded_columns = pd.get_dummies(df[['race', 'ethnicity']], columns=['race', 'ethnicity'])
+    encoded_columns = encoded_columns.astype(int)
+    # Concatenate the one-hot encoded columns with the original DataFrame
+    df = pd.concat([df, encoded_columns], axis=1)
+    logger.debug(f'new df: {df}')
     
-    return df
+    return df, encoded_columns.columns.tolist()
 
 def build_plot(data: pd.DataFrame, combined_column_names: list, target, case):
     x, y = case
