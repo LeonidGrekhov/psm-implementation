@@ -13,21 +13,25 @@ import datetime
 import src.util.FileProvider as FP
 logger = logging.getLogger(__name__)
 
+    #create random variables
 def set_random_seeds():
     tf.random.set_seed(42)
     np.random.seed(42)
     random.seed(42)
 
+    #convert cols to numeric
 def convert_to_numeric(data):
     numeric_columns = data.select_dtypes(include=['object']).columns
     data[numeric_columns] = data[numeric_columns].apply(pd.to_numeric, errors='coerce')
 
+    #train test split
 def split_data(data, parameters, target):
     X = data[parameters]
     y = data[target]
     y = y.values.ravel()
     return train_test_split(X, y, test_size=0.2, random_state=42)
 
+    #training with early stopping
 def train_neural_network(X_train, y_train, X_test, y_test):
     input_dim = X_train.shape[1]
     model = create_model(input_dim)
@@ -43,7 +47,7 @@ def train_neural_network(X_train, y_train, X_test, y_test):
         callbacks=[early_stopping],
     )
     return model, history
-
+#plot history of training loss and accuracy
 def plot_training_history(history):
     plt.figure(figsize=(12, 4))
     plt.subplot(1, 2, 1)
@@ -60,15 +64,18 @@ def plot_training_history(history):
     plt.ylabel('Accuracy')
     plt.legend()
 
+    #accuracy plot save
 def save_accuracy_plot(folder_name, timestamp):
     file_name = f'nn_accuracy_plot_{timestamp}.png'
     plt.savefig(folder_name + file_name)
 
+    #evaluate model
 def evaluate_model(model, X_test, y_test):
     y_pred = model.predict(X_test)
     roc_auc = roc_auc_score(y_test, y_pred)
     print(f"AUC-ROC on test data: {roc_auc:.4f}")
 
+    #predict psm score
 def predict_and_score_psm(model, X_test, y_test, X, dd, data, target):
     psm_test = model.predict(X_test)
     psm = model.predict(X)
@@ -89,6 +96,7 @@ def predict_and_score_psm(model, X_test, y_test, X, dd, data, target):
     metrics_df = pd.DataFrame(metrics_dict)
     logger.debug(metrics_df)
 
+    #generate the dataframe to save
 def generate_new_dataframe(data, dd, selected, psm):
     data_dict = {col: data[col] if col != dd.propensity_scores else psm for col in selected}
     new_df = pd.DataFrame(data_dict)
@@ -96,6 +104,13 @@ def generate_new_dataframe(data, dd, selected, psm):
     return new_df
 
 def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
+    """
+    Function preforms neural network training on provided data frame and returns psm scores for said data frame
+    :param data: data frame to process
+    :param parameters: number of  parameters (ie: age)
+    :param target: target
+    :return: pd.DataFrame: returns psm scores added to the data frame
+    """
     set_random_seeds()
     convert_to_numeric(data)
     
@@ -123,6 +138,7 @@ def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
     return new_df, metrics_df
 
 def create_model(input_dim):
+    #model to train
     model = tf.keras.Sequential([
         tf.keras.layers.Input(shape=(input_dim,)),
         tf.keras.layers.Dense(512, activation='relu', kernel_initializer='glorot_normal'),
