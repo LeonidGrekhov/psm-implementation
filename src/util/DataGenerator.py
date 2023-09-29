@@ -90,11 +90,11 @@ def encode_import_data(df):
 
     # Apply label encoding to 'sex', 'race', and 'ethnicity' columns
     #df['patient_id'] = label_encoder.fit_transform(df['patient_id'])
-    df['patient_id'] = df['patient_id'].str.extract('(\d+)').astype(int)
-    df['sex'] = label_encoder.fit_transform(df['sex'])
-    df['race'] = label_encoder.fit_transform(df['race'])
-    df['ethnicity'] = label_encoder.fit_transform(df['ethnicity'])
-    encoded_columns = pd.get_dummies(df[['race', 'ethnicity']], columns=['race', 'ethnicity'])
+    df[dd.patientID] = df[dd.patientID].str.extract('(\d+)').astype(int)
+    df[dd.sex] = label_encoder.fit_transform(df[dd.sex])
+    df[dd.race] = label_encoder.fit_transform(df[dd.race])
+    df[dd.ethnicity] = label_encoder.fit_transform(df[dd.ethnicity])
+    encoded_columns = pd.get_dummies(df[[dd.race, dd.ethnicity]], columns=[dd.race, dd.ethnicity])
     encoded_columns = encoded_columns.astype(int)
     # Concatenate the one-hot encoded columns with the original DataFrame
     df = pd.concat([df, encoded_columns], axis=1)
@@ -102,7 +102,7 @@ def encode_import_data(df):
     
     return df, encoded_columns.columns.tolist()
 
-def build_plot(data: pd.DataFrame, combined_column_names: list, target, case):
+def build_plot(data: pd.DataFrame, combined_column_names: list, target, case, model_name):
 
     x, y = case
     folder_name = FP.build_path
@@ -124,13 +124,13 @@ def build_plot(data: pd.DataFrame, combined_column_names: list, target, case):
 
     # Generate a file name with the timestamp
 
-    file_name = f'nn_{x}_categorical_{y}_{timestamp}.png'
+    file_name = f'{model_name}_{x}_categorical_{y}_{timestamp}.png'
 
 
     # Save the plot to the generated file name
     plt.savefig(folder_name + file_name)
     return
-def save_dataset(matched_df: pd.DataFrame, case, name):
+def save_dataset(matched_df: pd.DataFrame, case, model_name):
     #create a file for each sample combination
     folder_name = FP.build_path
     if not os.path.exists(folder_name):
@@ -138,7 +138,7 @@ def save_dataset(matched_df: pd.DataFrame, case, name):
     x, y = case
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
-    file_name = f'nn_{x}_categorical_{y}_{timestamp}.csv'
+    file_name = f'{model_name}_{x}_categorical_{y}_{timestamp}.csv'
 
 
     file_path = os.path.join(folder_name, file_name)

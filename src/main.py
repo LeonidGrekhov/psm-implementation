@@ -52,17 +52,27 @@ def main():
         combined_column_names = ['sex','age','bmi_val'] + encoded_columns
         #calculate psm scores and return a new data frame of just the sample columns with patient id and psm scores
 
-        #data, metrics_df = LogReg.LogRegress(result_df, combined_column_names, target)
-        data, metrics_df = neuralNetwork.nnModel(result_df, combined_column_names, target)
-        #data, metrics_df = randomForestPSMModel.random_for_psm(result_df, combined_column_names, target)
-        #data, metrics_df = SvmPsmModel.svm_for_psm(result_df, combined_column_names, target, constant=1.0, kernelMethod='rbf')#kernelMethod = poly, rbf, sigmoid
-        #data, metrics_df = LogReg.LogRegress(result_df, combined_column_names, target)
+        model_name = "NeuralNetwork"  # Change this to the desired model
+        data, metrics_df = select_model(model_name, result_df, combined_column_names, target)
 
         #calculate the pairs and save them to file
         matched_df = methods.match_nearest_neighbors(data, replacement=True, caliper=0.5, k_neighbors=1, method='caliper')
         matched_df = pd.concat([matched_df, metrics_df], ignore_index=True)
-        DataGenerator.save_dataset(matched_df, case, randomForestPSMModel.__name__)
+        DataGenerator.save_dataset(matched_df, case, model_name)
         #plot the data
-        DataGenerator.build_plot(data, combined_column_names, target, case, randomForestPSMModel.__name__)
+        DataGenerator.build_plot(data, combined_column_names, target, case, model_name)
     logger.debug('======Finish======')
 
+def select_model(model_name, result_df, combined_column_names, target):
+    if model_name == "LogisticRegression":
+        data, metrics_df = LogReg.LogRegress(result_df, combined_column_names, target)
+    elif model_name == "NeuralNetwork":
+        data, metrics_df = neuralNetwork.nnModel(result_df, combined_column_names, target)
+    elif model_name == "RandomForest":
+        data, metrics_df = randomForestPSMModel.random_for_psm(result_df, combined_column_names, target)
+    elif model_name == "SupportVectorMachine":
+        data, metrics_df = SvmPsmModel.svm_for_psm(result_df, combined_column_names, target, constant=1.0, kernelMethod='rbf')
+    else:
+        raise ValueError("Invalid model name")
+
+    return data, metrics_df
