@@ -14,8 +14,6 @@ import src.util.neuralNetwork as neuralNetwork
 import src.util.SvmPsmModel as SvmPsmModel
 import src.util.DataGenerator as DataGenerator
 
-
-
 # Set a random seed for reproducibility
 np.random.seed(42)
 
@@ -63,6 +61,7 @@ def main():
         DataGenerator.build_plot(data, combined_column_names, target, case, model_name)
     logger.debug('======Finish======')
 
+#select model to use for generating psm score and return modified data and metrics
 def select_model(model_name, result_df, combined_column_names, target):
     if model_name == "LogisticRegression":
         data, metrics_df = LogReg.LogRegress(result_df, combined_column_names, target)
