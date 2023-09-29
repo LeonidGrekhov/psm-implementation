@@ -87,13 +87,8 @@ def filter_data(df, case, num_params):
 
 def encode_import_data(df):
     label_encoder = LabelEncoder()
-
-    # Apply label encoding to 'sex', 'race', and 'ethnicity' columns
-    #df['patient_id'] = label_encoder.fit_transform(df['patient_id'])
     df[dd.patientID] = df[dd.patientID].str.extract('(\d+)').astype(int)
     df[dd.sex] = label_encoder.fit_transform(df[dd.sex])
-    df[dd.race] = label_encoder.fit_transform(df[dd.race])
-    df[dd.ethnicity] = label_encoder.fit_transform(df[dd.ethnicity])
     encoded_columns = pd.get_dummies(df[[dd.race, dd.ethnicity]], columns=[dd.race, dd.ethnicity])
     encoded_columns = encoded_columns.astype(int)
     # Concatenate the one-hot encoded columns with the original DataFrame
