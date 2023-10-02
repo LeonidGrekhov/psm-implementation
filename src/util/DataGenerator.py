@@ -6,6 +6,7 @@ import os
 import matplotlib.pyplot as plt
 import src.util.FileProvider as FP
 from src.datamodel.Column import DataDictionary as dd
+from sklearn.preprocessing import LabelEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ def generate_data(n_records: int, treatment_rate: float, n_params: int, numeric_
     one_hot_cat_columns = [f'one_hot_cat_param_{i+1}' for i in range(one_hot_cat_count)]
     
     # Add patient IDs
-    patient_ids = [f'Patient_{i+1}' for i in range(n_records)]
+    patient_ids = [f'{i+1}' for i in range(n_records)]
     
     # Combine ordered categorical and one-hot categorical data with patient IDs and numerical data
     cat_df = pd.DataFrame(ordered_categorical_data, columns=ordered_cat_columns)
@@ -65,9 +66,11 @@ def generate_data(n_records: int, treatment_rate: float, n_params: int, numeric_
     df[dd.treatment] = treatment_assignment
     
     return df    
-
+def import_data(path:str):
+    df = pd.read_csv(path)
+    return df
 def generate_study_cases():
-    cases =[(1, 0), (0, 1), (1, 1), (5, 0), (0, 5), (5, 5), (50, 0), (0, 50), (50, 70)]
+    cases = [(1, 0)]
     return cases
 def filter_data(df, case, num_params):
     combined_column_names = []
@@ -80,7 +83,22 @@ def filter_data(df, case, num_params):
         selected_categorical_column_names = df.columns[num_params+1:y+51]
         combined_column_names += selected_categorical_column_names.tolist()
     return combined_column_names
-def build_plot(data: pd.DataFrame, combined_column_names: list, target, case, name):
+
+
+def encode_import_data(df):
+    label_encoder = LabelEncoder()
+    df[dd.patientID] = df[dd.patientID].str.extract('(\d+)').astype(int)
+    df[dd.sex] = label_encoder.fit_transform(df[dd.sex])
+    encoded_columns = pd.get_dummies(df[[dd.race, dd.ethnicity]], columns=[dd.race, dd.ethnicity])
+    encoded_columns = encoded_columns.astype(int)
+    # Concatenate the one-hot encoded columns with the original DataFrame
+    df = pd.concat([df, encoded_columns], axis=1)
+    logger.debug(f'new df: {df}')
+    
+    return df, encoded_columns.columns.tolist()
+
+def build_plot(data: pd.DataFrame, combined_column_names: list, target, case, model_name):
+
     x, y = case
     folder_name = FP.build_path
     control_group = data[data[dd.treatment] == 0]
@@ -100,19 +118,24 @@ def build_plot(data: pd.DataFrame, combined_column_names: list, target, case, na
     # Specify the directory where you want to save the plot
 
     # Generate a file name with the timestamp
-    file_name = f'{name}_numerical_{x}_categorical_{y}_{timestamp}.png'
+
+    file_name = f'{model_name}_{x}_categorical_{y}_{timestamp}.png'
+
 
     # Save the plot to the generated file name
     plt.savefig(folder_name + file_name)
     return
-def save_dataset(matched_df: pd.DataFrame, case, name):
+def save_dataset(matched_df: pd.DataFrame, case, model_name):
     #create a file for each sample combination
     folder_name = FP.build_path
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
     x, y = case
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    file_name = f'{name}_numerical_{x}_categorical_{y}_{timestamp}.csv'
+
+    file_name = f'{model_name}_{x}_categorical_{y}_{timestamp}.csv'
+
+
     file_path = os.path.join(folder_name, file_name)
     try:
         matched_df.to_csv(file_path, index=False)

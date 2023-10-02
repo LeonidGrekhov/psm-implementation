@@ -6,8 +6,7 @@ from src.datamodel.Column import DataDictionary as dd
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-import matplotlib.pyplot as plt
-import datetime
+
 
 logger = logging.getLogger(__name__)
 #def LogRegress(data: pd.DataFrame, num_params: int, num_params_samples: int, cat_params_samples: int) -> pd.DataFrame:
