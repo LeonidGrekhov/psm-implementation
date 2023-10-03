@@ -34,7 +34,8 @@ def match_nearest_neighbors(data: pd.DataFrame, replacement: bool, caliper: floa
     for _, treated_unit in treatment_group.iterrows():
         # get distance between treated unit and all control records
         control_group['DIFF'] = np.abs(control_group[dd.propensity_scores] - treated_unit[dd.propensity_scores])
-
+        control_group['AGE_DIFF'] = np.abs(control_group['age'] - treated_unit['age'])
+        control_group['BMI_DIFF'] = np.abs(control_group['bmi_val'] - treated_unit['bmi_val'])
         # get matched records
         if method == 'caliper':
             filtered_control_group = control_group[control_group['DIFF'] <= caliper]

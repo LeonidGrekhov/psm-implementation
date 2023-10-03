@@ -143,3 +143,52 @@ def save_dataset(matched_df: pd.DataFrame, case, model_name):
         logger.error(f"An error occurred while writing to the file: {e}")
 
     return
+
+def metrics(model_name, df: pd.DataFrame):
+    folder_name = FP.build_path
+    if not os.path.exists(folder_name):
+        os.mkdir(folder_name)
+    
+    # Filter the DataFrame to include only rows where 'AGE_DIFF' is not null
+    filtered_df = df.dropna(subset=['DIFF'])
+
+    # Get the current timestamp
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    # Create and save the 'DIFF' scatter plot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(filtered_df['patient_id'], filtered_df['DIFF'], label='DIFF', marker='o', alpha=0.5)
+    ax.set_xlabel('Patient ID')
+    ax.set_ylabel('DIFF Value')
+    ax.set_title(f'{model_name} Patient ID vs. DIFF Scatter Plot')
+    ax.legend()
+    file_name = f'{model_name}_patient_id_vs_DIFF_{timestamp}.png'
+    plt.savefig(folder_name + file_name)
+    plt.close()
+
+    filtered_df = df.dropna(subset=['AGE_DIFF'])
+    # Create and save the 'AGE_DIFF' scatter plot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(filtered_df['patient_id'], filtered_df['AGE_DIFF'], label='AGE_DIFF', marker='o', alpha=0.5)
+    ax.set_xlabel('Patient ID')
+    ax.set_ylabel('AGE_DIFF Value')
+    ax.set_title(f'{model_name} Patient ID vs. AGE_DIFF Scatter Plot')
+    ax.legend()
+    file_name = f'{model_name}_patient_id_vs_AGE_DIFF_{timestamp}.png'
+    plt.savefig(folder_name + file_name)
+    plt.close()
+
+    filtered_df = df.dropna(subset=['BMI_DIFF'])
+    # Create and save the 'BMI_DIFF' scatter plot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(filtered_df['patient_id'], filtered_df['BMI_DIFF'], label='BMI_DIFF', marker='o', alpha=0.5)
+    ax.set_xlabel('Patient ID')
+    ax.set_ylabel('BMI_DIFF Value')
+    ax.set_title(f'{model_name} Patient ID vs. BMI_DIFF Scatter Plot')
+    ax.legend()
+    file_name = f'{model_name}_patient_id_vs_BMI_DIFF_{timestamp}.png'
+    plt.savefig(folder_name + file_name)
+    plt.close()
+
+    print("Plots saved with timestamp:", timestamp)
+    return
