@@ -6,7 +6,7 @@ import random
 from src.datamodel.Column import DataDictionary as dd
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, mean_squared_error
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import matplotlib.pyplot as plt
 import datetime
@@ -72,7 +72,9 @@ def save_accuracy_plot(folder_name, timestamp):
     #evaluate model
 def evaluate_model(model, X_test, y_test):
     y_pred = model.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
     roc_auc = roc_auc_score(y_test, y_pred)
+    print(f"MSE on test data: {mse:.4f}")
     print(f"AUC-ROC on test data: {roc_auc:.4f}")
 
     #predict psm score
@@ -84,12 +86,14 @@ def predict_and_score_psm(model, X_test, y_test, X, dd, data, target):
     y_pred_test = (psm_test > 0.5).astype(int)
 
     metrics_dict = {
-        'Metric': ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
+        'Metric': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'MSE', 'AUC-ROC'],
         'Testing': [
             accuracy_score(y_test, y_pred_test),
             precision_score(y_test, y_pred_test),
             recall_score(y_test, y_pred_test),
             f1_score(y_test, y_pred_test),
+            mean_squared_error(y_test, y_pred_test),
+            roc_auc_score(y_test, y_pred_test),
         ],
     }
 
@@ -127,7 +131,7 @@ def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
         evaluate_model(model, X_test, y_test)
 
         metrics_df = predict_and_score_psm(model, X_test, y_test, data[parameters], dd, data, target)
-
+        print(model.summary())
     else:
         logger.warning(f'Must select more than 0 columns to generate a psm score')
         sys.exit()
@@ -143,19 +147,19 @@ def create_model(input_dim):
         tf.keras.layers.Input(shape=(input_dim,)),
         tf.keras.layers.Dense(512, activation='relu', kernel_initializer='glorot_normal'),
         tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dropout(0.3, seed=42),
         tf.keras.layers.Dense(256, activation='relu', kernel_initializer='glorot_normal'),
         tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dropout(0.3, seed=42),
         tf.keras.layers.Dense(128, activation='relu', kernel_initializer='glorot_normal'),
         tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dropout(0.3, seed=42),
         tf.keras.layers.Dense(64, activation='relu', kernel_initializer='glorot_normal'),
         tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dropout(0.3, seed=42),
         tf.keras.layers.Dense(32, activation='relu', kernel_initializer='glorot_normal'),
         tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dropout(0.3, seed=42),
         tf.keras.layers.Dense(1, activation='sigmoid')
     ])
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])

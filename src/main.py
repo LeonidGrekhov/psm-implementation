@@ -50,7 +50,7 @@ def main():
         combined_column_names = ['sex','age','bmi_val'] + encoded_columns
         #calculate psm scores and return a new data frame of just the sample columns with patient id and psm scores
 
-        model_name = "LogisticRegression"  # Change this to the desired model
+        model_name = "NeuralNetwork"  # Change this to the desired model
         data, metrics_df = select_model(model_name, result_df, combined_column_names, target)
         
         #calculate the pairs and save them to file
