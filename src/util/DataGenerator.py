@@ -85,16 +85,24 @@ def filter_data(df, case, num_params):
     return combined_column_names
 
 
-def encode_import_data(df):
+def encode_import_data(df, one_hot_columns, label_columns):
     label_encoder = LabelEncoder()
     df[dd.patientID] = df[dd.patientID].str.extract('(\d+)').astype(int)
-    df[dd.sex] = label_encoder.fit_transform(df[dd.sex])
-    encoded_columns = pd.get_dummies(df[[dd.race, dd.ethnicity]], columns=[dd.race, dd.ethnicity])
+
+    # Label encode the specified columns
+    for column in label_columns:
+        df[column] = label_encoder.fit_transform(df[column])
+    
+    # One-hot encode the specified columns and convert to int
+    encoded_columns = pd.get_dummies(df[one_hot_columns], columns=one_hot_columns, dtype=int)
+
+    """df[dd.sex] = label_encoder.fit_transform(df[dd.sex])
+    encoded_columns = pd.get_dummies(df[[dd.race, dd.ethnicity]], columns=[dd.race, dd.ethnicity])"""
     encoded_columns = encoded_columns.astype(int)
     # Concatenate the one-hot encoded columns with the original DataFrame
     df = pd.concat([df, encoded_columns], axis=1)
     logger.debug(f'new df: {df}')
-    
+    df.drop(columns=one_hot_columns, inplace=True)
     return df, encoded_columns.columns.tolist()
 
 def build_plot(data: pd.DataFrame, combined_column_names: list, target, case, model_name):

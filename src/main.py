@@ -36,7 +36,7 @@ def main():
     #result_df = DataGenerator.generate_data(n_records=1000, treatment_rate=0.2, n_params=100, numeric_params_rate=0.5, max_categories_n=5, ordered_cat_rate=0.3)
     result_df = DataGenerator.import_data(path='src/data/psm_sample_data.csv')
     logger.debug(f'pre encode:{result_df.head()}')
-    result_df, encoded_columns = DataGenerator.encode_import_data(result_df)
+    result_df, encoded_columns = DataGenerator.encode_import_data(result_df, one_hot_columns = [dd.race, dd.ethnicity], label_columns = [dd.sex])
     logger.debug(f'post encode:{result_df.head()}')
     file_path = os.path.join(FP.build_path, 'result_df')
     result_df.to_csv(file_path, index=False)
@@ -47,7 +47,7 @@ def main():
     for case in cases:
         #build the column labels to be passed to logistic regression for testing purposes
         #combined_column_names = DataGenerator.filter_data(result_df, case, num_params=50)
-        combined_column_names = ['sex','age','bmi_val'] + encoded_columns
+        combined_column_names = ['sex', 'age','bmi_val'] + encoded_columns
         #calculate psm scores and return a new data frame of just the sample columns with patient id and psm scores
 
         model_name = "NeuralNetwork"  # Change this to the desired model
