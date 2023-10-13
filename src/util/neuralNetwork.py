@@ -78,13 +78,12 @@ def evaluate_model(model, X_test, y_test):
     print(f"AUC-ROC on test data: {roc_auc:.4f}")
 
     #predict psm score
-def predict_and_score_psm(model, X_test, y_test, X, dd, data, target):
+def predict_and_score_psm(model, X_test, y_test, X,  data, target):
     psm_test = model.predict(X_test)
     psm = model.predict(X)
     logger.debug(f'number of propensity_scores: {len(psm_test)}')
     data[dd.propensity_scores] = psm
     y_pred_test = (psm_test > 0.5).astype(int)
-
     metrics_dict = {
         'Metric': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'MSE', 'AUC-ROC'],
         'Testing': [
@@ -99,6 +98,7 @@ def predict_and_score_psm(model, X_test, y_test, X, dd, data, target):
 
     metrics_df = pd.DataFrame(metrics_dict)
     logger.debug(metrics_df)
+    #return metrics_df
 
     #generate the dataframe to save
 def generate_new_dataframe(data, dd, selected, psm):
@@ -130,7 +130,7 @@ def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
 
         evaluate_model(model, X_test, y_test)
 
-        metrics_df = predict_and_score_psm(model, X_test, y_test, data[parameters], dd, data, target)
+        metrics_df = predict_and_score_psm(model, X_test, y_test, data[parameters], data, target)
         print(model.summary())
     else:
         logger.warning(f'Must select more than 0 columns to generate a psm score')
