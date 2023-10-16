@@ -21,7 +21,7 @@ def main():
     logger = logging.getLogger('Main')
     logger.debug('======Start======')
     model_name = ['LogisticRegression', 'NeuralNetwork', 'RandomForest', 'SupportVectorMachine'] #'LogisticRegression', 'NeuralNetwork', 'RandomForest', 'SupportVectorMachine'  # Change this to the desired model (LogisticRegression, NeuralNetwork, RandomForest, SupportVectorMachine)
-    one_hot_columns = [dd.race, dd.ethnicity]
+    all_results_dfs = []
     # Set the logging level for Matplotlib to INFO (or higher)
     matplotlib.rcParams['font.family'] = 'sans-serif'
     matplotlib.rcParams['font.sans-serif'] = ['Arial']
@@ -73,9 +73,14 @@ def main():
 
             #matched_df.to_csv(file_path, index=False)
             #plot the data
-            result_diff = DataGenerator.stats(model, matched_df)
+            result_diff, metrics_df = DataGenerator.stats(model, matched_df)
+            all_results_dfs.append(metrics_df)
             DataGenerator.metrics(model, result_diff)
             DataGenerator.build_plot(data, combined_column_names, target, case, model)
+        merged_results_df = pd.concat(all_results_dfs, ignore_index=True)
+        
+        file_name = f'merged_results_df.csv'
+        merged_results_df.to_csv(FP.build_path + file_name, index=False)
         matched_df.to_csv(file_path, index=False)   
         logger.debug('======Finish======')
 

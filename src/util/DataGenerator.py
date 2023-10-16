@@ -209,7 +209,8 @@ def stats(model_name, df: pd.DataFrame):
         bmi_difference = abs(patient1['bmi_val'] - patient2['bmi_val'])
 
         similarity = int(age_difference <= age_threshold and bmi_difference <= bmi_threshold)
-
+        age_similarity = int(age_difference <= age_threshold)
+        bmi_similarity = int(bmi_difference <= bmi_threshold)
         
         #Check if 'race' and 'ethnicity' match between the two patients
         if patient1['race'] == patient2['race']:
@@ -230,17 +231,37 @@ def stats(model_name, df: pd.DataFrame):
             sex_difference = 0
         else:
             sex_difference = 1
-        results.append([difference, age_difference, bmi_difference, similarity, sex_difference, race_difference, ethnicity_difference])
+        results.append([difference, age_difference, bmi_difference, similarity, age_similarity, bmi_similarity, sex_difference, race_difference, ethnicity_difference])
     total_pairs = len(pairs)
 
     race_match_frequency = race_matches / total_pairs
     ethnicity_match_frequency = ethnicity_matches / total_pairs
     sex_match_frequency = sex_matches / total_pairs
     # Convert results to a DataFrame for easier calculation
-    results_df = pd.DataFrame(results, columns=['DIFF', 'AGE_DIFF', 'BMI_DIFF', 'Similarity','SEX_DIFF', 'RACE_DIFF', 'ETHNICITY_DIFF'])
+    results_df = pd.DataFrame(results, columns=['DIFF', 'AGE_DIFF', 'BMI_DIFF', 'Similarity', 'Age_Similarity','Bmi_Similarity','SEX_DIFF', 'RACE_DIFF', 'ETHNICITY_DIFF'])
     scaler = MinMaxScaler()
     #results_df[['AGE_DIFF', 'BMI_DIFF']] = 1 - scaler.fit_transform(results_df[['AGE_DIFF', 'BMI_DIFF']])
 
+    y_true = results_df['Age_Similarity']
+    y_pred = [1] * len(y_true)
+    age_accuracy = accuracy_score(y_true, y_pred)
+    age_precision = precision_score(y_true, y_pred)
+    age_recall = recall_score(y_true, y_pred)
+    age_f1 = f1_score(y_true, y_pred)
+    # Calculate mean squared error
+    mse_age = mean_squared_error(y_true, results_df['AGE_DIFF'])
+    roc_auc_age = roc_auc_score(y_true, results_df['AGE_DIFF'])
+    y_true = results_df['Bmi_Similarity']
+    y_pred = [1] * len(y_true)
+    bmi_accuracy = accuracy_score(y_true, y_pred)
+    bmi_precision = precision_score(y_true, y_pred)
+    bmi_recall = recall_score(y_true, y_pred)
+    bmi_f1 = f1_score(y_true, y_pred)
+    # Calculate mean squared error
+    mse_bmi = mean_squared_error(y_true, results_df['BMI_DIFF'])
+    roc_auc_bmi = roc_auc_score(y_true, results_df['BMI_DIFF'])
+    
+    '''
     # Calculate binary classification metrics
     y_true = results_df['Similarity']
     y_pred = [1] * len(y_true)
@@ -259,30 +280,49 @@ def stats(model_name, df: pd.DataFrame):
     #results_df[['Age Difference', 'BMI Difference']] = 1 - scaler.fit_transform(results_df[['Age Difference', 'BMI Difference']])
 
     roc_auc_age = roc_auc_score(y_true, results_df['AGE_DIFF'])
-    roc_auc_bmi = roc_auc_score(y_true, results_df['BMI_DIFF'])
+    roc_auc_bmi = roc_auc_score(y_true, results_df['BMI_DIFF'])'''
 
-    output_file_path = f'{model_name}_output_'
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S.log")
-    # Open the file in write mode
-    with open(folder_name + output_file_path + timestamp, 'w') as file:
-        file.write(f'Accuracy: {accuracy}\n')
-        file.write(f'Precision: {precision}\n')
-        file.write(f'Recall: {recall}\n')
-        file.write(f'F1 Score: {f1}\n')
-        file.write(f'MSE for Age: {mse_age}\n')
-        file.write(f'MSE for BMI: {mse_bmi}\n')
-        file.write(f'ROC AUC Score (Age): {roc_auc_age}\n')
-        file.write(f'ROC AUC Score (BMI): {roc_auc_bmi}\n')
-        file.write(f'race_match_frequency: {race_match_frequency}\n')
-        file.write(f'ethnicity_match_frequency: {ethnicity_match_frequency}\n')
-        file.write(f'sex_match_frequency: {sex_match_frequency}\n')
-        bmi_mean = df['BMI_DIFF'].mean()
-        age_mean = df['AGE_DIFF'].mean()
-        file.write(f'BMI mean: {bmi_mean} AGE mean: {age_mean}\n')
+    bmi_mean = df['BMI_DIFF'].mean()
+    age_mean = df['AGE_DIFF'].mean()
+
     file_name = f'{model_name}_results_final.csv'
     results_df.to_csv(folder_name + file_name, index=False)
 
-    return results_df
+    
+    
+    
+    data = {
+        'Model Name': [model_name],
+        'Age Accuracy': [age_accuracy],
+        'Age Precision': [age_precision],
+        'Age Recall': [age_recall],
+        'Age F1 Score': [age_f1],
+        'BMI Accuracy': [bmi_accuracy],
+        'BMI Precision': [bmi_precision],
+        'BMI ecall': [bmi_recall],
+        'BMI F1 Score': [bmi_f1],
+        'MSE for Age': [mse_age],
+        'MSE for BMI': [mse_bmi],
+        'ROC AUC Score (Age)': [roc_auc_age],
+        'ROC AUC Score (BMI)': [roc_auc_bmi],
+        'race_match_frequency': [race_match_frequency],
+        'ethnicity_match_frequency': [ethnicity_match_frequency],
+        'sex_match_frequency': [sex_match_frequency],
+        'BMI mean': [bmi_mean],
+        'AGE mean': [age_mean]
+    }
+
+    # Create a DataFrame
+    metrics_df = pd.DataFrame(data)
+
+    # Generate a timestamp
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S.log")
+
+    # Save the DataFrame to a CSV file
+    file_name = f'{model_name}_metrics_{timestamp}.csv'
+    metrics_df.to_csv(folder_name + file_name, index=False)
+
+    return results_df, metrics_df
 
 def metrics(model_name, df: pd.DataFrame):
     folder_name = FP.build_path
