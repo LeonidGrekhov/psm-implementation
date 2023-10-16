@@ -244,7 +244,7 @@ def stats(model_name, df: pd.DataFrame):
     age_f1 = f1_score(y_true, y_pred)
     # Calculate mean squared error
     mse_age = mean_squared_error(y_true, results_df['AGE_DIFF'])
-    roc_auc_age = roc_auc_score(y_true, results_df['AGE_DIFF'])
+
     y_true = results_df['Bmi_Similarity']
     y_pred = [1] * len(y_true)
     bmi_accuracy = accuracy_score(y_true, y_pred)
@@ -253,7 +253,7 @@ def stats(model_name, df: pd.DataFrame):
     bmi_f1 = f1_score(y_true, y_pred)
     # Calculate mean squared error
     mse_bmi = mean_squared_error(y_true, results_df['BMI_DIFF'])
-    roc_auc_bmi = roc_auc_score(y_true, results_df['BMI_DIFF'])
+
     
     '''
     # Calculate binary classification metrics
@@ -294,8 +294,6 @@ def stats(model_name, df: pd.DataFrame):
         'BMI F1 Score': [bmi_f1],
         'MSE for Age': [mse_age],
         'MSE for BMI': [mse_bmi],
-        'ROC AUC Score (Age)': [roc_auc_age],
-        'ROC AUC Score (BMI)': [roc_auc_bmi],
         'race_match_frequency': [race_match_frequency],
         'ethnicity_match_frequency': [ethnicity_match_frequency],
         'sex_match_frequency': [sex_match_frequency],
@@ -307,7 +305,7 @@ def stats(model_name, df: pd.DataFrame):
     metrics_df = pd.DataFrame(data)
 
     # Generate a timestamp
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S.log")
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # Save the DataFrame to a CSV file
     file_name = f'{model_name}_metrics_{timestamp}.csv'
@@ -367,7 +365,7 @@ def merged_df_plot(merged_df: pd.DataFrame):
         os.mkdir(folder_name)
     file_name = "merged_df.png"
     merged_df.set_index("Model Name", inplace=True)
-    metrics = ["Age Accuracy","Age Precision","Age Recall","Age F1 Score","BMI Accuracy","BMI Precision","BMI Recall","BMI F1 Score", "MSE for Age", "MSE for BMI", "ROC AUC Score (Age)", "ROC AUC Score (BMI)","race_match_frequency", "ethnicity_match_frequency","sex_match_frequency"]
+    metrics = ["Age Accuracy","Age Precision","Age Recall","Age F1 Score","BMI Accuracy","BMI Precision","BMI Recall","BMI F1 Score", "MSE for Age", "MSE for BMI", "race_match_frequency", "ethnicity_match_frequency","sex_match_frequency", "BMI mean", "AGE mean"]
 
     # Plot the metrics
     fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(15, 10))
@@ -379,8 +377,7 @@ def merged_df_plot(merged_df: pd.DataFrame):
         ax.set_title(metric)
     if metric.startswith("MSE"):
         ax.set_yscale("log")  # Set logarithmic scale for MSE plots
-    if metric.startswith("ROC"):
-        ax.set_ylim(0, 1)  # Set y-axis limits for ROC AUC plots
+
 
     plt.tight_layout()
     plt.savefig(os.path.join(folder_name, file_name), format='png', dpi=300, bbox_inches='tight')
