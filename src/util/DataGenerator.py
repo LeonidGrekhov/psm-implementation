@@ -303,13 +303,13 @@ def stats(model_name, df: pd.DataFrame):
 
     # Create a DataFrame
     metrics_df = pd.DataFrame(data)
-
+    
     # Generate a timestamp
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # Save the DataFrame to a CSV file
     file_name = f'{model_name}_metrics_{timestamp}.csv'
-    metrics_df.to_csv(folder_name + file_name, index=False)
+    metrics_df.to_csv(folder_name + file_name, index=True)
 
     return results_df, metrics_df
 

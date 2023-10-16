@@ -20,7 +20,7 @@ np.random.seed(42)
 def main():
     logger = logging.getLogger('Main')
     logger.debug('======Start======')
-    model_name = ['LogisticRegression', 'NeuralNetwork', 'RandomForest', 'SupportVectorMachine'] #'LogisticRegression', 'NeuralNetwork', 'RandomForest', 'SupportVectorMachine'  # Change this to the desired model (LogisticRegression, NeuralNetwork, RandomForest, SupportVectorMachine)
+    model_name = ['LR', 'NN', 'RF', 'SVM'] #'LogisticRegression', 'NeuralNetwork', 'RandomForest', 'SupportVectorMachine'  # Change this to the desired model (LogisticRegression, NeuralNetwork, RandomForest, SupportVectorMachine)
     all_results_dfs = []
     # Set the logging level for Matplotlib to INFO (or higher)
     matplotlib.rcParams['font.family'] = 'sans-serif'
@@ -77,22 +77,22 @@ def main():
             all_results_dfs.append(metrics_df)
             DataGenerator.metrics(model, result_diff)
             DataGenerator.build_plot(data, combined_column_names, target, case, model)
-        merged_results_df = pd.concat(all_results_dfs, ignore_index=True)
+        merged_results_df = pd.concat(all_results_dfs, ignore_index=False)
         DataGenerator.merged_df_plot(merged_results_df)
         file_name = f'merged_results_df.csv'
-        merged_results_df.to_csv(FP.build_path + file_name, index=False)
+        merged_results_df.to_csv(FP.build_path + file_name, index=True)
         matched_df.to_csv(file_path, index=False)   
         logger.debug('======Finish======')
 
 #select model to use for generating psm score and return modified data and metrics
 def select_model(model_name, encoded_df, combined_column_names, target):
-    if model_name == "LogisticRegression":
+    if model_name == "LR": #LogisticRegression
         data, metrics_df = LogReg.LogRegress(encoded_df, combined_column_names, target)
-    elif model_name == "NeuralNetwork":
+    elif model_name == "NN": #NeuralNetwork
         data, metrics_df = neuralNetwork.nnModel(encoded_df, combined_column_names, target)
-    elif model_name == "RandomForest":
+    elif model_name == "RF": #RandomForest
         data, metrics_df = randomForestPSMModel.random_for_psm(encoded_df, combined_column_names, target)
-    elif model_name == "SupportVectorMachine":
+    elif model_name == "SVM": #SupportVectorMachine
         data, metrics_df = SvmPsmModel.svm_for_psm(encoded_df, combined_column_names, target, constant=1.0, kernelMethod='rbf')
     else:
         raise ValueError("Invalid model name")
