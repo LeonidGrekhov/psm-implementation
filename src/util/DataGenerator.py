@@ -185,13 +185,7 @@ def stats(model_name, df: pd.DataFrame):
     race_matches = 0
     ethnicity_matches = 0
     sex_matches = 0
-    '''
-    df['age'].fillna(0, inplace=True)
-    df['bmi_val'].fillna(0, inplace=True)
-    df['sex'].fillna(0, inplace=True)
-    df['race'].fillna(0, inplace=True)
-    df['ethnicity'].fillna(0, inplace=True)
-    '''
+
     logger.debug(f'df in stats: \n{df.head()}')
     pairs = [df.iloc[i:i+2] for i in range(0, len(df), 2)]
 
@@ -287,9 +281,6 @@ def stats(model_name, df: pd.DataFrame):
 
     file_name = f'{model_name}_results_final.csv'
     results_df.to_csv(folder_name + file_name, index=False)
-
-    
-    
     
     data = {
         'Model Name': [model_name],
@@ -299,7 +290,7 @@ def stats(model_name, df: pd.DataFrame):
         'Age F1 Score': [age_f1],
         'BMI Accuracy': [bmi_accuracy],
         'BMI Precision': [bmi_precision],
-        'BMI ecall': [bmi_recall],
+        'BMI Recall': [bmi_recall],
         'BMI F1 Score': [bmi_f1],
         'MSE for Age': [mse_age],
         'MSE for BMI': [mse_bmi],
@@ -367,6 +358,31 @@ def metrics(model_name, df: pd.DataFrame):
         file_name = f'{model_name}_{column}_barplot_{timestamp}.png'
         plt.savefig(os.path.join(folder_name, file_name))
         plt.close()
-
     print("Plots saved with timestamp:", timestamp)
+    return
+
+def merged_df_plot(merged_df: pd.DataFrame):
+    folder_name = FP.build_path
+    if not os.path.exists(folder_name):
+        os.mkdir(folder_name)
+    file_name = "merged_df.png"
+    merged_df.set_index("Model Name", inplace=True)
+    metrics = ["Age Accuracy","Age Precision","Age Recall","Age F1 Score","BMI Accuracy","BMI Precision","BMI Recall","BMI F1 Score", "MSE for Age", "MSE for BMI", "ROC AUC Score (Age)", "ROC AUC Score (BMI)","race_match_frequency", "ethnicity_match_frequency","sex_match_frequency"]
+
+    # Plot the metrics
+    fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(15, 10))
+
+    
+    for i, metric in enumerate(metrics):
+        ax = axes[i // 4, i % 4]
+        merged_df[metric].plot(kind='bar', ax=ax)
+        ax.set_title(metric)
+    if metric.startswith("MSE"):
+        ax.set_yscale("log")  # Set logarithmic scale for MSE plots
+    if metric.startswith("ROC"):
+        ax.set_ylim(0, 1)  # Set y-axis limits for ROC AUC plots
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(folder_name, file_name), format='png', dpi=300, bbox_inches='tight')
+    
     return

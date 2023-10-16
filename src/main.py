@@ -78,7 +78,7 @@ def main():
             DataGenerator.metrics(model, result_diff)
             DataGenerator.build_plot(data, combined_column_names, target, case, model)
         merged_results_df = pd.concat(all_results_dfs, ignore_index=True)
-        
+        DataGenerator.merged_df_plot(merged_results_df)
         file_name = f'merged_results_df.csv'
         merged_results_df.to_csv(FP.build_path + file_name, index=False)
         matched_df.to_csv(file_path, index=False)   
