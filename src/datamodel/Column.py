@@ -5,3 +5,5 @@ class DataDictionary:
     sex = 'sex'
     race = 'race'
     ethnicity = 'ethnicity'
+    age = 'age'
+    bmi = 'bmi_val'

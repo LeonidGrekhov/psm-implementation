@@ -49,20 +49,21 @@ def train_neural_network(X_train, y_train, X_test, y_test):
     return model, history
 #plot history of training loss and accuracy
 def plot_training_history(history):
-    plt.figure(figsize=(12, 4))
-    plt.subplot(1, 2, 1)
-    plt.plot(history.history['loss'], label='Training Loss')
-    plt.plot(history.history['val_loss'], label='Validation Loss')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.legend()
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+    
+    # Subplot 1: Loss
+    axes[0].plot(history.history['loss'], label='Training Loss')
+    axes[0].plot(history.history['val_loss'], label='Validation Loss')
+    axes[0].set_xlabel('Epochs')
+    axes[0].set_ylabel('Loss')
+    axes[0].legend()
 
-    plt.subplot(1, 2, 2)
-    plt.plot(history.history['accuracy'], label='Training Accuracy')
-    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
-    plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
-    plt.legend()
+    # Subplot 2: Accuracy
+    axes[1].plot(history.history['accuracy'], label='Training Accuracy')
+    axes[1].plot(history.history['val_accuracy'], label='Validation Accuracy')
+    axes[1].set_xlabel('Epochs')
+    axes[1].set_ylabel('Accuracy')
+    axes[1].legend()
 
     #accuracy plot save
 def save_accuracy_plot(folder_name, timestamp):
@@ -107,7 +108,7 @@ def generate_new_dataframe(data, dd, selected, psm):
     new_df[dd.propensity_scores] = psm
     return new_df
 
-def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
+def nnModel(original_df, data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
     """
     Function preforms neural network training on provided data frame and returns psm scores for said data frame
     :param data: data frame to process
@@ -138,8 +139,10 @@ def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
 
     selected = [data.columns[0]] + parameters + target
     new_df = generate_new_dataframe(data, dd, selected, data[dd.propensity_scores])
+    psm_original_df =  pd.concat([original_df, data[dd.propensity_scores]], axis=1)
+    logger.debug(f'PSM Original data frame:\n{psm_original_df.head()}')
 
-    return new_df, metrics_df
+    return new_df, metrics_df, psm_original_df
 
 def create_model(input_dim):
     #model to train

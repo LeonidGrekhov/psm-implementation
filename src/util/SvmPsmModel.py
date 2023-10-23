@@ -13,7 +13,7 @@ import datetime
 
 logger = logging.getLogger(__name__)
 
-def svm_for_psm(data: pd.DataFrame, parameters: list, target: list, constant: float, kernelMethod: str) -> pd.DataFrame:
+def svm_for_psm(original_df, data: pd.DataFrame, parameters: list, target: list, constant: float, kernelMethod: str) -> pd.DataFrame:
     """
     Function preforms on provided data frame and returns psm scores for said data frame
     :param data: data frame generated earlier by DataGenerator.py
@@ -81,10 +81,11 @@ def svm_for_psm(data: pd.DataFrame, parameters: list, target: list, constant: fl
     patientID = data.columns[0]
     selected += [patientID] + parameters + target
     data_dict = {col: data[col] if col != dd.propensity_scores else psm for col in selected}
-
+    data[dd.propensity_scores] = psm
 
     # Create a new DataFrame from the dictionary
     new_df = pd.DataFrame(data_dict)
     new_df[dd.propensity_scores] = psm
     logger.debug(f'best param: {best_params}')
-    return new_df, metrics_df
+    psm_original_df =  pd.concat([original_df, data[dd.propensity_scores]], axis=1)
+    return new_df, metrics_df,psm_original_df

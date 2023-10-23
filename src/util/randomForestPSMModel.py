@@ -13,7 +13,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 logger = logging.getLogger(__name__)
 
-def random_for_psm(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
+def random_for_psm(original_df, data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
     """
     Function preforms on provided data frame and returns psm scores for said data frame
     :param data: data frame generated earlier by DataGenerator.py
@@ -53,7 +53,7 @@ def random_for_psm(data: pd.DataFrame, parameters: list, target: list) -> pd.Dat
 
         # Print the best hyperparameters found by the grid search
         best_params = grid_search.best_params_
-        logger.debug("Best Hyperparameters:", best_params)
+        
 
         # Get the best model
         best_rf_model = grid_search.best_estimator_
@@ -63,11 +63,11 @@ def random_for_psm(data: pd.DataFrame, parameters: list, target: list) -> pd.Dat
 
         # Calculate Mean Squared Error (MSE) as an evaluation metric
         mse = mean_squared_error(y_test, y_pred)
-        logger.debug("Mean Squared Error:", mse)
+        
 
         # You can also access other information such as feature importances if needed
         feature_importances = best_rf_model.feature_importances_
-        logger.debug("feature_importances:", feature_importances)
+        
 
         # Predict propensity scores
         propensity_scores = best_rf_model.predict(X_test)  # Probability of being treated
@@ -98,10 +98,11 @@ def random_for_psm(data: pd.DataFrame, parameters: list, target: list) -> pd.Dat
     patientID = data.columns[0]
     selected += [patientID] + parameters + target
     data_dict = {col: data[col] if col != dd.propensity_scores else psm for col in selected}
-
+    data[dd.propensity_scores] = psm
 
     # Create a new DataFrame from the dictionary
     new_df = pd.DataFrame(data_dict)
     new_df[dd.propensity_scores] = psm
-
-    return new_df, metrics_df
+    logger.debug(f'data in random forest"\n {data.head()}')
+    psm_original_df =  pd.concat([original_df, data[dd.propensity_scores]], axis=1)
+    return new_df, metrics_df, psm_original_df
