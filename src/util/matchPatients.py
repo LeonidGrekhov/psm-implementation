@@ -50,18 +50,19 @@ def matchPatients(path:str, label_columns:list, one_hot_columns:list, target_col
         matched_df = methods.match_nearest_neighbors(ps_results, replacement=True, caliper=0.5, k_neighbors=1, method='caliper')
 
         DataGenerator.save_dataset(matched_df, model)
-
+        metrics_df = DataGenerator.stats(model, matched_df)
         age_diff.append(DataGenerator.find_diff(matched_df, dd.age, model))
         bmi_diff.append(DataGenerator.find_diff(matched_df, dd.bmi, model))
         sex_diff.append(DataGenerator.find_cat(matched_df, dd.sex, model))
         race_diff.append(DataGenerator.find_cat(matched_df, dd.race, model))
         eth_diff.append(DataGenerator.find_cat(matched_df, dd.ethnicity, model))
-        
+
     sex_diff = pd.concat(sex_diff)
     race_diff = pd.concat(race_diff)
     eth_diff = pd.concat(eth_diff)
     age_diff = pd.concat(age_diff)
     bmi_diff = pd.concat(bmi_diff)
+    
 
     DataGenerator.plot_boxplot(age_diff)      
     DataGenerator.plot_boxplot(bmi_diff)
@@ -69,6 +70,7 @@ def matchPatients(path:str, label_columns:list, one_hot_columns:list, target_col
     DataGenerator.plot_barplot(sex_diff)
     DataGenerator.plot_barplot(race_diff) 
     DataGenerator.plot_barplot(eth_diff)    
+    
 
 #select model to use for generating psm score and return modified data and metrics
 def select_model(model_name, original_df, encoded_df, combined_column_names, target):

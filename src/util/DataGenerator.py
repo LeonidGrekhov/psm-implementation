@@ -210,20 +210,19 @@ def find_cat(df:pd.DataFrame, col:str, model_name):
 
     # Convert the results list into a new DataFrame
     result_df = pd.DataFrame(results)
-    logger.debug(f'find cat function: \n{result_df.head()}')
+    #logger.debug(f'find cat function: \n{result_df.head()}')
     return result_df
 def plot_barplot(psm_results:pd.DataFrame):
     folder_name = FP.build_path  
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
 
-    logger.debug(f'psm results in plot barplot: \n{psm_results.head()}')
+    #logger.debug(f'psm results in plot barplot: \n{psm_results.head()}')
     col = psm_results.columns.tolist()
     plt.figure()
     plt.clf()
     psm_results.to_csv(folder_name + f'/{col[1]}_diff.csv', index=False)
-    counts = psm_results.groupby(['model', col[1]]).size().unstack(fill_value=0)
-    counts.plot(kind='bar', stacked=True)
+    sns.barplot(data=psm_results, x=f'{col[2]}', y=f'{col[0]}', hue=f'{col[1]}')
     plt.xlabel('Model')
     plt.ylabel('Count')
     plt.title(f'Bar Plot of {col[1]} Counts by Model')
@@ -236,13 +235,19 @@ def plot_boxplot(psm_results:pd.DataFrame):
     folder_name = FP.build_path
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
-    logger.debug(f'psm results in plot boxplot: \n{psm_results.head()}')
+    #logger.debug(f'psm results in plot boxplot: \n{psm_results.head()}')
     col = psm_results.columns.tolist()
     plt.clf()
     psm_results.to_csv(folder_name + f'{col[1]}_diff.csv', index=False)
     sns.boxplot(data= psm_results, y=f'{col[1]}', x='model')
     plt.savefig(folder_name + f'{col[1]}_diff.png')
     return
+
+def statistics(df: pd.DataFrame):
+    folder_name = FP.build_path
+    if not os.path.exists(folder_name):
+        os.mkdir(folder_name)
+    grouped_df = df.groupby('matched_group')
 
 def stats(model_name, df: pd.DataFrame):
     folder_name = FP.build_path
@@ -265,8 +270,8 @@ def stats(model_name, df: pd.DataFrame):
         patient1 = pair.iloc[0]
         patient2 = pair.iloc[1]
         difference = df[f'DIFF']
-        age_difference  = df[f'AGE_DIFF']
-        bmi_difference =  df[f'BMI_DIFF']
+        #age_difference  = df[f'AGE_DIFF']
+        #bmi_difference =  df[f'BMI_DIFF']
 
         
         # #similarity = int(age_difference <= age_threshold and bmi_difference <= bmi_threshold)
@@ -292,29 +297,42 @@ def stats(model_name, df: pd.DataFrame):
             sex_difference = 0
         else:
             sex_difference = 1
-        results.append([difference, age_difference, bmi_difference, sex_difference, race_difference, ethnicity_difference])
+        results.append([difference, sex_difference, race_difference, ethnicity_difference])
     total_pairs = len(pairs)
 
     race_match_frequency = race_matches / total_pairs
     ethnicity_match_frequency = ethnicity_matches / total_pairs
     sex_match_frequency = sex_matches / total_pairs
     # Convert results to a DataFrame for easier calculation
-    results_df = pd.DataFrame(results, columns=[f'{model_name}_DIFF', f'{model_name}_AGE_DIFF', f'{model_name}_BMI_DIFF', f'{model_name}_SEX_DIFF', f'{model_name}_RACE_DIFF', f'{model_name}_ETHNICITY_DIFF'])
+    #results_df = pd.DataFrame(results, columns=[f'{model_name}_DIFF', f'{model_name}_AGE_DIFF', f'{model_name}_BMI_DIFF', f'{model_name}_SEX_DIFF', f'{model_name}_RACE_DIFF', f'{model_name}_ETHNICITY_DIFF'])
     scaler = MinMaxScaler()
     #results_df[['AGE_DIFF', 'BMI_DIFF']] = 1 - scaler.fit_transform(results_df[['AGE_DIFF', 'BMI_DIFF']])
-    treatment_group = df[df['treatment'] == 1]['age']
-    control_group = df[df['treatment'] == 0]['age']
+
+    treatment_group = df[df['treatment'] == 1]['age'].values
+    control_group = df[df['treatment'] == 0]['age'].values
+
+    scaler = MinMaxScaler()
+    # Fit and transform the treatment_group data
+    y_true = df.loc[df['treatment'] == 1, 'age']
+    y_pred = df.loc[df['treatment'] == 0, 'age']
+
+    logger.debug(f'treatment_group: {y_true}')
+    logger.debug(f'control_groups: {y_pred}')
     y_true = treatment_group #age group 1 , group 2
     y_pred = control_group
     # logger.debug(f'age treatment:\n {y_true}')
     # logger.debug(f'age control:\n {y_pred}')
-    # age_accuracy = accuracy_score(y_true, y_pred)
-    # age_precision = precision_score(y_true, y_pred)
-    # age_recall = recall_score(y_true, y_pred)
-    # age_f1 = f1_score(y_true, y_pred)
+    #age_accuracy = accuracy_score(y_true, y_pred)
+    #age_precision = precision_score(y_true, y_pred)
+    #age_recall = recall_score(y_true, y_pred)
+    #age_f1 = f1_score(y_true, y_pred)
     # # Calculate mean squared error
     mse_age = mean_squared_error(y_true, y_pred)
     logger.debug(f'mse_age: \n{mse_age}')
+    treatment_group = df[df['treatment'] == 1]['bmi_val']
+    control_group = df[df['treatment'] == 0]['bmi_val']
+    y_true = treatment_group #age group 1 , group 2
+    y_pred = control_group
     # y_true = treatment_group['bmi_val'] #age group 1 , group 2
     # y_pred = control_group['bmi_val']
     # bmi_accuracy = accuracy_score(y_true, y_pred)
@@ -322,32 +340,34 @@ def stats(model_name, df: pd.DataFrame):
     # bmi_recall = recall_score(y_true, y_pred)
     # bmi_f1 = f1_score(y_true, y_pred)
     # # Calculate mean squared error
-    # mse_bmi = mean_squared_error(y_true, y_pred)
+    treatment_group = df[df['treatment'] == 1]['bmi_val']
+    control_group = df[df['treatment'] == 0]['bmi_val']
+    mse_bmi = mean_squared_error(y_true, y_pred)
 
 
-    bmi_mean = df[f'BMI_DIFF'].mean()
-    age_mean = df[f'AGE_DIFF'].mean()
+    #bmi_mean = df[f'BMI_DIFF'].mean()
+    #age_mean = df[f'AGE_DIFF'].mean()
 
     file_name = f'{model_name}_results_final.csv'
-    results_df.to_csv(folder_name + file_name, index=False)
+    #results_df.to_csv(folder_name + file_name, index=False)
     
     data = {
         'Model Name': [model_name],
-        'Age Accuracy': [age_accuracy],
-        'Age Precision': [age_precision],
-        'Age Recall': [age_recall],
-        'Age F1 Score': [age_f1],
-        'BMI Accuracy': [bmi_accuracy],
-        'BMI Precision': [bmi_precision],
-        'BMI Recall': [bmi_recall],
-        'BMI F1 Score': [bmi_f1],
+        #'Age Accuracy': [age_accuracy],
+        # 'Age Precision': [age_precision],
+        # 'Age Recall': [age_recall],
+        #'Age F1 Score': [age_f1],
+        # 'BMI Accuracy': [bmi_accuracy],
+        # 'BMI Precision': [bmi_precision],
+        # 'BMI Recall': [bmi_recall],
+        # 'BMI F1 Score': [bmi_f1],
         'MSE for Age': [mse_age],
         'MSE for BMI': [mse_bmi],
         'race_match_frequency': [race_match_frequency],
         'ethnicity_match_frequency': [ethnicity_match_frequency],
         'sex_match_frequency': [sex_match_frequency],
-        'BMI mean': [bmi_mean],
-        'AGE mean': [age_mean]
+        #'BMI mean': [bmi_mean],
+        #'AGE mean': [age_mean]
     }
 
     # Create a DataFrame
@@ -360,7 +380,13 @@ def stats(model_name, df: pd.DataFrame):
     file_name = f'{model_name}_metrics_{timestamp}.csv'
     metrics_df.to_csv(folder_name + file_name, index=True)
 
-    return results_df, metrics_df
+    age_diff = df.groupby('matched_group')['age'].diff().fillna(0)
+
+    # Calculate the MSE of age differences
+    mse = (age_diff ** 2).mean()
+
+    logger.debug(f'Mean Squared Error of Age Differences: {mse}')
+    return  metrics_df
 
 def metrics(model_name, df: pd.DataFrame):
     folder_name = FP.build_path
