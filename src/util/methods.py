@@ -54,7 +54,8 @@ def match_nearest_neighbors(data: pd.DataFrame, replacement: bool, caliper: floa
             return None
 
         # pick records for the result
-        matched_records = filtered_control_group.head(1)
+        matched_records = filtered_control_group.head(1)#dtype changes here
+        
         if replacement:
             control_group = control_group[~control_group[dd.patientID].isin(matched_records[dd.patientID])]
         matched_records = pd.concat([matched_records, treated_unit.to_frame().transpose()])

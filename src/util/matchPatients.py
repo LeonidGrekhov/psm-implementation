@@ -33,6 +33,7 @@ def matchPatients(path:str, label_columns:list, one_hot_columns:list, target_col
 
     for model in model_name:
         matched_df = pd.DataFrame()
+
         original_df = DataGenerator.import_data(path)
         lb_encode = DataGenerator.encode_import_labels(original_df, label_columns)
         logger.debug(f'lb_encode:\n{lb_encode}')
@@ -41,14 +42,21 @@ def matchPatients(path:str, label_columns:list, one_hot_columns:list, target_col
         combined_column_names = ['sex', 'age','bmi_val'] + encoded_columns
         #calculate psm scores and return a new data frame of just the sample columns with patient id and psm scores
 
-        data, metrics_df, ps_results = select_model(model, original_df, encoded_df, combined_column_names, target)
-        ps_results.to_csv()
+        data, metrics_df, ps_results = select_model(model, lb_encode, encoded_df, combined_column_names, target)
+
         logger.debug(f'post data:\n{data}')
 
         logger.debug(f'post metrics_df:\n{metrics_df}')
 
         matched_df = methods.match_nearest_neighbors(ps_results, replacement=True, caliper=0.5, k_neighbors=1, method='caliper')
-
+        matched_df[dd.patientID] = matched_df[dd.patientID].astype(int)
+        matched_df[dd.sex] = matched_df[dd.sex].astype(int)
+        matched_df[dd.race] = matched_df[dd.race].astype(int)
+        matched_df[dd.ethnicity] = matched_df[dd.ethnicity].astype(int)
+        matched_df[dd.age] = matched_df[dd.age].astype(int)
+        matched_df[dd.bmi] = matched_df[dd.bmi].astype(float)
+        matched_df[dd.treatment] = matched_df[dd.treatment].astype(bool)
+        matched_df[dd.propensity_scores] = matched_df[dd.propensity_scores].astype(float)
         DataGenerator.save_dataset(matched_df, model)
         metrics_df = DataGenerator.stats(model, matched_df)
         age_diff.append(DataGenerator.find_diff(matched_df, dd.age, model))

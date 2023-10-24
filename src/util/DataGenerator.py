@@ -70,7 +70,7 @@ def generate_data(n_records: int, treatment_rate: float, n_params: int, numeric_
     
     return df    
 def import_data(path:str):
-    df = pd.read_csv(path)
+    df = pd.read_csv(path, dtype={dd.patientID: str, dd.sex: str, dd.ethnicity: str, dd.age: int, dd.bmi: float, dd.treatment: bool})
     return df
 def generate_study_cases():
     cases = [(1, 0)]
@@ -94,7 +94,7 @@ def encode_import_labels(df, label_columns):
     
     # Label encode the specified columns
     for column in label_columns:
-        df[column] = label_encoder.fit_transform(df[column])
+        df[column] = label_encoder.fit_transform(df[column]).astype(int)
     return df
 
 def encode_import_one_hot(df, one_hot_columns):
@@ -216,17 +216,15 @@ def plot_barplot(psm_results:pd.DataFrame):
     folder_name = FP.build_path  
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
-
-    #logger.debug(f'psm results in plot barplot: \n{psm_results.head()}')
+    # #logger.debug(f'psm results in plot barplot: \n{psm_results.head()}')
     col = psm_results.columns.tolist()
     plt.figure()
     plt.clf()
-    psm_results.to_csv(folder_name + f'/{col[1]}_diff.csv', index=False)
-    sns.barplot(data=psm_results, x=f'{col[2]}', y=f'{col[0]}', hue=f'{col[1]}')
+    psm_results.to_csv(folder_name + f'{col[1]}_diff.csv', index=False)
+    sns.countplot(x='model', hue=col[1], data=psm_results)
     plt.xlabel('Model')
     plt.ylabel('Count')
-    plt.title(f'Bar Plot of {col[1]} Counts by Model')
-    psm_results.to_csv(folder_name + f'{col[1]}_diff.csv', index=False)
+    plt.title('Count of Records by Model and True/False Distribution')
     plt.savefig(folder_name + f'/{col[1]}_diff.png')
     plt.close()  
     return
@@ -241,6 +239,7 @@ def plot_boxplot(psm_results:pd.DataFrame):
     psm_results.to_csv(folder_name + f'{col[1]}_diff.csv', index=False)
     sns.boxplot(data= psm_results, y=f'{col[1]}', x='model')
     plt.savefig(folder_name + f'{col[1]}_diff.png')
+    plt.close() 
     return
 
 def statistics(df: pd.DataFrame):
@@ -248,6 +247,16 @@ def statistics(df: pd.DataFrame):
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
     grouped_df = df.groupby('matched_group')
+
+def calculate_stats(df: pd.DataFrame, col:str):
+    y_true = df.loc[df['treatment'] == 1, col].tolist()
+    y_pred = df.loc[df['treatment'] == 0, col].tolist()
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred, average='micro')
+    recall = recall_score(y_true, y_pred, average='micro')
+    f1 = f1_score(y_true, y_pred, average='micro')
+    mse = mean_squared_error(y_true, y_pred)
+    return accuracy, precision, recall, f1, mse
 
 def stats(model_name, df: pd.DataFrame):
     folder_name = FP.build_path
@@ -308,41 +317,9 @@ def stats(model_name, df: pd.DataFrame):
     scaler = MinMaxScaler()
     #results_df[['AGE_DIFF', 'BMI_DIFF']] = 1 - scaler.fit_transform(results_df[['AGE_DIFF', 'BMI_DIFF']])
 
-    treatment_group = df[df['treatment'] == 1]['age'].values
-    control_group = df[df['treatment'] == 0]['age'].values
+    accuracy_age, precision_age, recall_age, f1_age, mse_age = calculate_stats(df, col='age')
+    #accuracy_bmi, precision_bmi, recall_bmi, f1_bmi, mse_bmi = calculate_stats(df, col='bmi_val')
 
-    scaler = MinMaxScaler()
-    # Fit and transform the treatment_group data
-    y_true = df.loc[df['treatment'] == 1, 'age']
-    y_pred = df.loc[df['treatment'] == 0, 'age']
-
-    logger.debug(f'treatment_group: {y_true}')
-    logger.debug(f'control_groups: {y_pred}')
-    y_true = treatment_group #age group 1 , group 2
-    y_pred = control_group
-    # logger.debug(f'age treatment:\n {y_true}')
-    # logger.debug(f'age control:\n {y_pred}')
-    #age_accuracy = accuracy_score(y_true, y_pred)
-    #age_precision = precision_score(y_true, y_pred)
-    #age_recall = recall_score(y_true, y_pred)
-    #age_f1 = f1_score(y_true, y_pred)
-    # # Calculate mean squared error
-    mse_age = mean_squared_error(y_true, y_pred)
-    logger.debug(f'mse_age: \n{mse_age}')
-    treatment_group = df[df['treatment'] == 1]['bmi_val']
-    control_group = df[df['treatment'] == 0]['bmi_val']
-    y_true = treatment_group #age group 1 , group 2
-    y_pred = control_group
-    # y_true = treatment_group['bmi_val'] #age group 1 , group 2
-    # y_pred = control_group['bmi_val']
-    # bmi_accuracy = accuracy_score(y_true, y_pred)
-    # bmi_precision = precision_score(y_true, y_pred)
-    # bmi_recall = recall_score(y_true, y_pred)
-    # bmi_f1 = f1_score(y_true, y_pred)
-    # # Calculate mean squared error
-    treatment_group = df[df['treatment'] == 1]['bmi_val']
-    control_group = df[df['treatment'] == 0]['bmi_val']
-    mse_bmi = mean_squared_error(y_true, y_pred)
 
 
     #bmi_mean = df[f'BMI_DIFF'].mean()
@@ -353,16 +330,16 @@ def stats(model_name, df: pd.DataFrame):
     
     data = {
         'Model Name': [model_name],
-        #'Age Accuracy': [age_accuracy],
-        # 'Age Precision': [age_precision],
-        # 'Age Recall': [age_recall],
-        #'Age F1 Score': [age_f1],
-        # 'BMI Accuracy': [bmi_accuracy],
-        # 'BMI Precision': [bmi_precision],
-        # 'BMI Recall': [bmi_recall],
-        # 'BMI F1 Score': [bmi_f1],
-        'MSE for Age': [mse_age],
-        'MSE for BMI': [mse_bmi],
+        'Age Accuracy': [accuracy_age],
+        'Age Precision': [precision_age],
+        'Age Recall': [recall_age],
+        'Age F1 Score': [f1_age],
+        'Age mse': [mse_age],
+        # 'BMI Accuracy': [accuracy_bmi],
+        # 'BMI Precision': [precision_bmi],
+        # 'BMI Recall': [recall_bmi],
+        # 'BMI F1 Score': [f1_bmi],
+        # 'BMI mse': [mse_bmi],
         'race_match_frequency': [race_match_frequency],
         'ethnicity_match_frequency': [ethnicity_match_frequency],
         'sex_match_frequency': [sex_match_frequency],
