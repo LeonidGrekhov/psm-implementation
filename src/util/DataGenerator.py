@@ -261,7 +261,7 @@ def statistics(df: pd.DataFrame):
     # Save the plots as image files
     for metric in metrics:
         filename = f'{metric.replace(" ", "_").lower()}_plot.png'
-        plt.figure(figsize=(15, 12))
+        plt.figure(figsize=(10, 8))
         sns.barplot(x='Model Name', y=metric, data=df)
         plt.title(f'{metric} by Model')
         plt.savefig(folder_name + filename)
@@ -270,15 +270,16 @@ def statistics(df: pd.DataFrame):
 def calculate_metrics(df: pd.DataFrame, col:str):
     y_true = df.loc[df['treatment'] == 1, col].tolist()
     y_pred = df.loc[df['treatment'] == 0, col].tolist()
-    accuracy = accuracy_score(y_true, y_pred)
-    precision = precision_score(y_true, y_pred, average='micro')
-    recall = recall_score(y_true, y_pred, average='micro')
-    f1 = f1_score(y_true, y_pred, average='micro')
+    #accuracy = accuracy_score(y_true, y_pred)
+    #precision = precision_score(y_true, y_pred, average='micro')
+    #recall = recall_score(y_true, y_pred, average='micro')
+    #f1 = f1_score(y_true, y_pred, average='micro')
     mse = mean_squared_error(y_true, y_pred)
     mae = mean_absolute_error(y_true, y_pred)
     rmse = np.sqrt(mse)
     r2 = r2_score(y_true, y_pred)
-    return accuracy, precision, recall, f1, mse, mae, rmse, r2
+    #return accuracy, precision, recall, f1, 
+    return mse, mae, rmse, r2
 
 def calculate_matches(group):
     group['sex_match'] = int(group['sex'].nunique() == 1)
@@ -298,17 +299,19 @@ def stats(model_name, df: pd.DataFrame):
     ethnicity_match_frequency = new_df['ethnicity_match'].mean()
     sex_match_frequency = new_df['sex_match'].mean()
     
-    accuracy_age, precision_age, recall_age, f1_age, mse_age, mae_age, rmse_age, r2_age = calculate_metrics(df, col='age')
-    #accuracy_bmi, precision_bmi, recall_bmi, f1_bmi, mse_bmi = calculate_stats(df, col='bmi_val')
+    #accuracy_age, precision_age, recall_age, f1_age, 
+    mse_age, mae_age, rmse_age, r2_age = calculate_metrics(df, col='age')
+    #accuracy_bmi, precision_bmi, recall_bmi, f1_bmi, 
+    mse_bmi, mae_bmi, rmse_bmi, r2_bmi = calculate_metrics(df, col='bmi_val')
 
     file_name = f'{model_name}_results_final.csv'
     
     data = {
         'Model Name': [model_name],
-        'Age Accuracy': [accuracy_age],
-        'Age Precision': [precision_age],
-        'Age Recall': [recall_age],
-        'Age F1 Score': [f1_age],
+        # 'Age Accuracy': [accuracy_age],
+        # 'Age Precision': [precision_age],
+        # 'Age Recall': [recall_age],
+        # 'Age F1 Score': [f1_age],
         'Age mse': [mse_age],
         'Age mae': [mae_age],
         'Age rmse': [rmse_age],
@@ -318,7 +321,10 @@ def stats(model_name, df: pd.DataFrame):
         # 'BMI Precision': [precision_bmi],
         # 'BMI Recall': [recall_bmi],
         # 'BMI F1 Score': [f1_bmi],
-        # 'BMI mse': [mse_bmi],
+        'BMI mse': [mse_bmi],
+        'BMI mae': [mae_bmi],
+        'BMI rmse': [rmse_bmi],
+        'BMI r2': [r2_bmi],
         'race_match_frequency': [race_match_frequency],
         'ethnicity_match_frequency': [ethnicity_match_frequency],
         'sex_match_frequency': [sex_match_frequency],
