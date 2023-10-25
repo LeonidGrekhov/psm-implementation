@@ -16,13 +16,16 @@ import src.util.DataGenerator as DataGenerator
 
 def matchPatients(path:str, label_columns:list, one_hot_columns:list, target_column:list) -> pd.DataFrame:
     logger = logging.getLogger('MatchPatients')
-
+    folder_name = FP.build_path
+    if not os.path.exists(folder_name):
+        os.mkdir(folder_name)
     model_name = ['NN','LR', 'RF', 'SVM'] #'LR', 'NN', 'RF', 'SVM''LogisticRegression', 'NeuralNetwork', 'RandomForest', 'SupportVectorMachine'  # Change this to the desired model (LogisticRegression, NeuralNetwork, RandomForest, SupportVectorMachine)
     bmi_diff = []
     age_diff = []
     sex_diff = []
     race_diff = []
     eth_diff = []
+    result_dfs = []
     target = target_column
     # Set the logging level for Matplotlib to INFO (or higher)
     matplotlib.rcParams['font.family'] = 'sans-serif'
@@ -64,14 +67,18 @@ def matchPatients(path:str, label_columns:list, one_hot_columns:list, target_col
         sex_diff.append(DataGenerator.find_cat(matched_df, dd.sex, model))
         race_diff.append(DataGenerator.find_cat(matched_df, dd.race, model))
         eth_diff.append(DataGenerator.find_cat(matched_df, dd.ethnicity, model))
-
+        result_dfs.append(metrics_df)
     sex_diff = pd.concat(sex_diff)
     race_diff = pd.concat(race_diff)
     eth_diff = pd.concat(eth_diff)
     age_diff = pd.concat(age_diff)
     bmi_diff = pd.concat(bmi_diff)
     
+    combined_df = pd.concat(result_dfs, ignore_index=True)
+    file_name = f'all_statistic_results.csv'
+    combined_df.to_csv(folder_name + file_name, index=False)
 
+    DataGenerator.statistics(combined_df)
     DataGenerator.plot_boxplot(age_diff)      
     DataGenerator.plot_boxplot(bmi_diff)
 

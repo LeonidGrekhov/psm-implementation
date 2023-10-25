@@ -8,7 +8,7 @@ import src.util.FileProvider as FP
 import seaborn as sns
 from src.datamodel.Column import DataDictionary as dd
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_squared_error, roc_auc_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import MinMaxScaler
 
 logger = logging.getLogger(__name__)
@@ -243,12 +243,31 @@ def plot_boxplot(psm_results:pd.DataFrame):
     return
 
 def statistics(df: pd.DataFrame):
-    folder_name = FP.build_path
+    folder_name = FP.build_path  
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
-    grouped_df = df.groupby('matched_group')
+    fig, axes = plt.subplots(nrows=4, ncols=3, figsize=(15, 12))
+    # #logger.debug(f'psm results in plot barplot: \n{psm_results.head()}')
+    metrics = [col for col in df.columns if col != 'Model Name']
+    for i, metric in enumerate(metrics):
+        row = i // 3
+        col = i % 3
+        sns.barplot(x='Model Name', y=metric, data=df, ax=axes[row, col])
+        axes[row, col].set_title(f'{metric} by Model')
 
-def calculate_stats(df: pd.DataFrame, col:str):
+    # Adjust layout
+    plt.tight_layout()
+
+    # Save the plots as image files
+    for metric in metrics:
+        filename = f'{metric.replace(" ", "_").lower()}_plot.png'
+        plt.figure(figsize=(15, 12))
+        sns.barplot(x='Model Name', y=metric, data=df)
+        plt.title(f'{metric} by Model')
+        plt.savefig(folder_name + filename)
+        plt.close()
+
+def calculate_metrics(df: pd.DataFrame, col:str):
     y_true = df.loc[df['treatment'] == 1, col].tolist()
     y_pred = df.loc[df['treatment'] == 0, col].tolist()
     accuracy = accuracy_score(y_true, y_pred)
@@ -256,77 +275,33 @@ def calculate_stats(df: pd.DataFrame, col:str):
     recall = recall_score(y_true, y_pred, average='micro')
     f1 = f1_score(y_true, y_pred, average='micro')
     mse = mean_squared_error(y_true, y_pred)
-    return accuracy, precision, recall, f1, mse
+    mae = mean_absolute_error(y_true, y_pred)
+    rmse = np.sqrt(mse)
+    r2 = r2_score(y_true, y_pred)
+    return accuracy, precision, recall, f1, mse, mae, rmse, r2
+
+def calculate_matches(group):
+    group['sex_match'] = int(group['sex'].nunique() == 1)
+    group['race_match'] = int(group['race'].nunique() == 1)
+    group['ethnicity_match'] = int(group['ethnicity'].nunique() == 1)
+    return group
+
 
 def stats(model_name, df: pd.DataFrame):
     folder_name = FP.build_path
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
-    race_matches = 0
-    ethnicity_matches = 0
-    sex_matches = 0
-
     logger.debug(f'df in stats: \n{df.head()}')
-    pairs = [df.iloc[i:i+2] for i in range(0, len(df), 2)]
 
-    # # Sample threshold values for age and BMI differences
-    # age_threshold = 5
-    # bmi_threshold = 5
-
-    results = []
-
-    for pair in pairs:
-        patient1 = pair.iloc[0]
-        patient2 = pair.iloc[1]
-        difference = df[f'DIFF']
-        #age_difference  = df[f'AGE_DIFF']
-        #bmi_difference =  df[f'BMI_DIFF']
-
-        
-        # #similarity = int(age_difference <= age_threshold and bmi_difference <= bmi_threshold)
-        # #age_similarity = int(age_difference <= age_threshold)
-        # bmi_similarity = int(bmi_difference <= bmi_threshold)
-        
-        #Check if 'race' and 'ethnicity' match between the two patients
-        if patient1['race'] == patient2['race']:
-            race_matches += 1
-            race_difference = 0
-        else:
-            race_difference = 1
-
-        if patient1['ethnicity'] == patient2['ethnicity']:
-            ethnicity_matches += 1
-            ethnicity_difference = 0
-        else:
-            ethnicity_difference = 1
-
-        # Check if 'sex' matches between the two patients
-        if patient1['sex'] == patient2['sex']:
-            sex_matches += 1
-            sex_difference = 0
-        else:
-            sex_difference = 1
-        results.append([difference, sex_difference, race_difference, ethnicity_difference])
-    total_pairs = len(pairs)
-
-    race_match_frequency = race_matches / total_pairs
-    ethnicity_match_frequency = ethnicity_matches / total_pairs
-    sex_match_frequency = sex_matches / total_pairs
-    # Convert results to a DataFrame for easier calculation
-    #results_df = pd.DataFrame(results, columns=[f'{model_name}_DIFF', f'{model_name}_AGE_DIFF', f'{model_name}_BMI_DIFF', f'{model_name}_SEX_DIFF', f'{model_name}_RACE_DIFF', f'{model_name}_ETHNICITY_DIFF'])
-    scaler = MinMaxScaler()
-    #results_df[['AGE_DIFF', 'BMI_DIFF']] = 1 - scaler.fit_transform(results_df[['AGE_DIFF', 'BMI_DIFF']])
-
-    accuracy_age, precision_age, recall_age, f1_age, mse_age = calculate_stats(df, col='age')
+    new_df = df.groupby('matched_group').apply(calculate_matches).reset_index(drop=True)
+    race_match_frequency = new_df['race_match'].mean()
+    ethnicity_match_frequency = new_df['ethnicity_match'].mean()
+    sex_match_frequency = new_df['sex_match'].mean()
+    
+    accuracy_age, precision_age, recall_age, f1_age, mse_age, mae_age, rmse_age, r2_age = calculate_metrics(df, col='age')
     #accuracy_bmi, precision_bmi, recall_bmi, f1_bmi, mse_bmi = calculate_stats(df, col='bmi_val')
 
-
-
-    #bmi_mean = df[f'BMI_DIFF'].mean()
-    #age_mean = df[f'AGE_DIFF'].mean()
-
     file_name = f'{model_name}_results_final.csv'
-    #results_df.to_csv(folder_name + file_name, index=False)
     
     data = {
         'Model Name': [model_name],
@@ -335,6 +310,10 @@ def stats(model_name, df: pd.DataFrame):
         'Age Recall': [recall_age],
         'Age F1 Score': [f1_age],
         'Age mse': [mse_age],
+        'Age mae': [mae_age],
+        'Age rmse': [rmse_age],
+        'Age r2': [r2_age],
+     
         # 'BMI Accuracy': [accuracy_bmi],
         # 'BMI Precision': [precision_bmi],
         # 'BMI Recall': [recall_bmi],
@@ -346,70 +325,12 @@ def stats(model_name, df: pd.DataFrame):
         #'BMI mean': [bmi_mean],
         #'AGE mean': [age_mean]
     }
-
-    # Create a DataFrame
     metrics_df = pd.DataFrame(data)
-    
-    # Generate a timestamp
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-
-    # Save the DataFrame to a CSV file
     file_name = f'{model_name}_metrics_{timestamp}.csv'
     metrics_df.to_csv(folder_name + file_name, index=True)
-
-    age_diff = df.groupby('matched_group')['age'].diff().fillna(0)
-
-    # Calculate the MSE of age differences
-    mse = (age_diff ** 2).mean()
-
-    logger.debug(f'Mean Squared Error of Age Differences: {mse}')
     return  metrics_df
 
-def metrics(model_name, df: pd.DataFrame):
-    folder_name = FP.build_path
-    if not os.path.exists(folder_name):
-        os.mkdir(folder_name)
-    
-    # Get the current timestamp
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    
-    columns_to_plot = [f'{model_name}_DIFF', f'{model_name}_AGE_DIFF', f'{model_name}_BMI_DIFF']
-
-    for column in columns_to_plot:
-        # Filter the DataFrame to include only rows where the current column is not null
-        filtered_df = df.dropna(subset=[column])
-        
-        # Create and save the box plot
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.boxplot(filtered_df[column])
-        ax.set_title(f'{model_name} {column} Box Plot')
-        ax.set_ylabel(f'{column} Value')
-        ax.set_xlabel(f'Patients')
-        file_name = f'{model_name}_{column}_boxplot_{timestamp}.png'
-        plt.savefig(os.path.join(folder_name, file_name))
-        plt.close()
-    # Get the current timestamp
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    cat_plot = [f'{model_name}_SEX_DIFF', f'{model_name}_RACE_DIFF', f'{model_name}_ETHNICITY_DIFF']
-    for column in cat_plot:
-        # Create a categorical bar plot for 'SEX_DIFF'
-        fig, ax = plt.subplots(figsize=(10, 6))
-        filtered_df = df.dropna(subset=[column])
-        
-        # Count the occurrences of each category in the 'SEX_DIFF' column
-        diff_counts = filtered_df[column].value_counts()
-        
-        # Create the bar plot
-        diff_counts.plot(kind='bar', ax=ax)
-        
-        ax.set_title(f'{model_name} {column} Categorical Bar Plot')
-        ax.set_xlabel('Category')
-        ax.set_ylabel('Count')
-        file_name = f'{model_name}_{column}_barplot_{timestamp}.png'
-        plt.savefig(os.path.join(folder_name, file_name))
-        plt.close()
-    print("Plots saved with timestamp:", timestamp)
-    return
 
 def merged_df_plot(merged_df: pd.DataFrame):
     folder_name = FP.build_path
