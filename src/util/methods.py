@@ -34,11 +34,6 @@ def match_nearest_neighbors(data: pd.DataFrame, replacement: bool, caliper: floa
     for _, treated_unit in treatment_group.iterrows():
         # get distance between treated unit and all control records
         control_group['DIFF'] = np.abs(control_group[dd.propensity_scores] - treated_unit[dd.propensity_scores])
-        # control_group['AGE_DIFF'] = np.abs(control_group['age'] - treated_unit['age'])
-        # control_group['BMI_DIFF'] = np.abs(control_group['bmi_val'] - treated_unit['bmi_val'])
-        #control_group['SEX_DIFF'] = np.abs(control_group['sex'] - treated_unit['sex'])
-        
-        
         # get matched records
         if method == 'caliper':
             filtered_control_group = control_group[control_group['DIFF'] <= caliper]
@@ -54,11 +49,12 @@ def match_nearest_neighbors(data: pd.DataFrame, replacement: bool, caliper: floa
             return None
 
         # pick records for the result
-        matched_records = filtered_control_group.head(1)#dtype changes here
+        matched_records = filtered_control_group.head(1).copy()#dtype changes here
         
         if replacement:
             control_group = control_group[~control_group[dd.patientID].isin(matched_records[dd.patientID])]
-        matched_records = pd.concat([matched_records, treated_unit.to_frame().transpose()])
+        matched_records = pd.concat([matched_records, treated_unit.to_frame().transpose()], ignore_index=True)
+
         # Assign a matched_group value to the matched records
         matched_records['matched_group'] = matched_group_counter
         matched_group_counter += 1
