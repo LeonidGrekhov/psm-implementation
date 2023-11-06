@@ -134,7 +134,6 @@ def decode_import_one_hot(encoded_df, one_hot_columns, encoded_columns):
     return decoded_df
 
 def build_plot(data: pd.DataFrame, combined_column_names: list, target, case, model_name):
-
     x, y = case
     folder_name = FP.build_path
     control_group = data[data[dd.treatment] == 0]
@@ -166,52 +165,35 @@ def save_dataset(matched_df: pd.DataFrame, model_name):
     folder_name = FP.build_path
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
-    
     file_name = f'{model_name}_results.csv'
-
-
     file_path = os.path.join(folder_name, file_name)
     try:
         matched_df.to_csv(file_path, index=False)
     except Exception as e:
         logger.error(f"An error occurred while writing to the file: {e}")
-
     return
+
 def find_diff(df:pd.DataFrame, col:str, model_name):
     matched_grouped = df.groupby('matched_group')
     differences = matched_grouped[col].diff().abs()    
-
-
-    # Create a new DataFrame to store the average age difference for each matched group.
     result_df = differences.groupby(df['matched_group']).mean().reset_index()
-
-    # Create a new column "model" and assign the model_name to each respective age difference.
     result_df['model'] = model_name
     return result_df
 
-def find_cat(df:pd.DataFrame, col:str, model_name):
-    
+def find_cat(df:pd.DataFrame, col:str, model_name):   
     grouped_df = df.groupby('matched_group')
-
-    # Create an empty list to store the results
     results = []
-
-    # Iterate through each group
     for group_name, group_data in grouped_df:
-        # Check if the specified column is the same for all rows in the group
         diff = group_data[col].nunique() == 1
-
-        # Append the result to the results list
         results.append({
             'matched_group': group_name,
             f'{col}': diff,
             'model': model_name
         })
-
-    # Convert the results list into a new DataFrame
     result_df = pd.DataFrame(results)
     #logger.debug(f'find cat function: \n{result_df.head()}')
     return result_df
+
 def plot_barplot(psm_results:pd.DataFrame):
     folder_name = FP.build_path  
     if not os.path.exists(folder_name):
@@ -254,10 +236,7 @@ def statistics(df: pd.DataFrame):
         col = i % 3
         sns.barplot(x='Model Name', y=metric, data=df, ax=axes[row, col])
         axes[row, col].set_title(f'{metric} by Model')
-
-    # Adjust layout
     plt.tight_layout()
-
     # Save the plots as image files
     for metric in metrics:
         filename = f'{metric.replace(" ", "_").lower()}_plot.png'
@@ -336,29 +315,3 @@ def stats(model_name, df: pd.DataFrame):
     file_name = f'{model_name}_metrics_{timestamp}.csv'
     metrics_df.to_csv(folder_name + file_name, index=True)
     return  metrics_df
-
-
-def merged_df_plot(merged_df: pd.DataFrame):
-    folder_name = FP.build_path
-    if not os.path.exists(folder_name):
-        os.mkdir(folder_name)
-    file_name = "merged_df.png"
-    merged_df.set_index("Model Name", inplace=True)
-    metrics = ["Age Accuracy","Age Precision","Age Recall","Age F1 Score","BMI Accuracy","BMI Precision","BMI Recall","BMI F1 Score", "MSE for Age", "MSE for BMI", "race_match_frequency", "ethnicity_match_frequency","sex_match_frequency", "BMI mean", "AGE mean"]
-
-    # Plot the metrics
-    fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(15, 10))
-
-    
-    for i, metric in enumerate(metrics):
-        ax = axes[i // 4, i % 4]
-        merged_df[metric].plot(kind='bar', ax=ax)
-        ax.set_title(metric)
-    if metric.startswith("MSE"):
-        ax.set_yscale("log")  # Set logarithmic scale for MSE plots
-
-
-    plt.tight_layout()
-    plt.savefig(os.path.join(folder_name, file_name), format='png', dpi=300, bbox_inches='tight')
-    
-    return
