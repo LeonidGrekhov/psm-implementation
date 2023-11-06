@@ -6,7 +6,7 @@ import random
 from src.datamodel.Column import DataDictionary as dd
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, mean_squared_error
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import matplotlib.pyplot as plt
 import datetime
@@ -49,20 +49,21 @@ def train_neural_network(X_train, y_train, X_test, y_test):
     return model, history
 #plot history of training loss and accuracy
 def plot_training_history(history):
-    plt.figure(figsize=(12, 4))
-    plt.subplot(1, 2, 1)
-    plt.plot(history.history['loss'], label='Training Loss')
-    plt.plot(history.history['val_loss'], label='Validation Loss')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.legend()
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+    
+    # Subplot 1: Loss
+    axes[0].plot(history.history['loss'], label='Training Loss')
+    axes[0].plot(history.history['val_loss'], label='Validation Loss')
+    axes[0].set_xlabel('Epochs')
+    axes[0].set_ylabel('Loss')
+    axes[0].legend()
 
-    plt.subplot(1, 2, 2)
-    plt.plot(history.history['accuracy'], label='Training Accuracy')
-    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
-    plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
-    plt.legend()
+    # Subplot 2: Accuracy
+    axes[1].plot(history.history['accuracy'], label='Training Accuracy')
+    axes[1].plot(history.history['val_accuracy'], label='Validation Accuracy')
+    axes[1].set_xlabel('Epochs')
+    axes[1].set_ylabel('Accuracy')
+    axes[1].legend()
 
     #accuracy plot save
 def save_accuracy_plot(folder_name, timestamp):
@@ -72,29 +73,33 @@ def save_accuracy_plot(folder_name, timestamp):
     #evaluate model
 def evaluate_model(model, X_test, y_test):
     y_pred = model.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
     roc_auc = roc_auc_score(y_test, y_pred)
+    print(f"MSE on test data: {mse:.4f}")
     print(f"AUC-ROC on test data: {roc_auc:.4f}")
 
     #predict psm score
-def predict_and_score_psm(model, X_test, y_test, X, dd, data, target):
+def predict_and_score_psm(model, X_test, y_test, X,  data, target):
     psm_test = model.predict(X_test)
     psm = model.predict(X)
     logger.debug(f'number of propensity_scores: {len(psm_test)}')
     data[dd.propensity_scores] = psm
     y_pred_test = (psm_test > 0.5).astype(int)
-
     metrics_dict = {
-        'Metric': ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
+        'Metric': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'MSE', 'AUC-ROC'],
         'Testing': [
             accuracy_score(y_test, y_pred_test),
             precision_score(y_test, y_pred_test),
             recall_score(y_test, y_pred_test),
             f1_score(y_test, y_pred_test),
+            mean_squared_error(y_test, y_pred_test),
+            roc_auc_score(y_test, y_pred_test),
         ],
     }
 
     metrics_df = pd.DataFrame(metrics_dict)
     logger.debug(metrics_df)
+    #return metrics_df
 
     #generate the dataframe to save
 def generate_new_dataframe(data, dd, selected, psm):
@@ -103,7 +108,7 @@ def generate_new_dataframe(data, dd, selected, psm):
     new_df[dd.propensity_scores] = psm
     return new_df
 
-def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
+def nnModel(original_df, data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
     """
     Function preforms neural network training on provided data frame and returns psm scores for said data frame
     :param data: data frame to process
@@ -126,16 +131,18 @@ def nnModel(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
 
         evaluate_model(model, X_test, y_test)
 
-        metrics_df = predict_and_score_psm(model, X_test, y_test, data[parameters], dd, data, target)
-
+        metrics_df = predict_and_score_psm(model, X_test, y_test, data[parameters], data, target)
+        print(model.summary())
     else:
         logger.warning(f'Must select more than 0 columns to generate a psm score')
         sys.exit()
 
     selected = [data.columns[0]] + parameters + target
     new_df = generate_new_dataframe(data, dd, selected, data[dd.propensity_scores])
+    psm_original_df =  pd.concat([original_df, data[dd.propensity_scores]], axis=1)
+    logger.debug(f'PSM Original data frame:\n{psm_original_df.head()}')
 
-    return new_df, metrics_df
+    return new_df, metrics_df, psm_original_df
 
 def create_model(input_dim):
     #model to train
@@ -143,19 +150,19 @@ def create_model(input_dim):
         tf.keras.layers.Input(shape=(input_dim,)),
         tf.keras.layers.Dense(512, activation='relu', kernel_initializer='glorot_normal'),
         tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dropout(0.3, seed=42),
         tf.keras.layers.Dense(256, activation='relu', kernel_initializer='glorot_normal'),
         tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dropout(0.3, seed=42),
         tf.keras.layers.Dense(128, activation='relu', kernel_initializer='glorot_normal'),
         tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dropout(0.3, seed=42),
         tf.keras.layers.Dense(64, activation='relu', kernel_initializer='glorot_normal'),
         tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dropout(0.3, seed=42),
         tf.keras.layers.Dense(32, activation='relu', kernel_initializer='glorot_normal'),
         tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.5, seed=42),
+        tf.keras.layers.Dropout(0.3, seed=42),
         tf.keras.layers.Dense(1, activation='sigmoid')
     ])
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])

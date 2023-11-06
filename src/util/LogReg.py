@@ -10,7 +10,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 
 logger = logging.getLogger(__name__)
 #def LogRegress(data: pd.DataFrame, num_params: int, num_params_samples: int, cat_params_samples: int) -> pd.DataFrame:
-def LogRegress(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
+def LogRegress(original_df, data: pd.DataFrame, parameters: list, target: list) -> pd.DataFrame:
     """
     Function preforms on provided data frame and returns psm scores for said data frame
     :param data: data frame generated earlier by DataGenerator.py
@@ -59,5 +59,6 @@ def LogRegress(data: pd.DataFrame, parameters: list, target: list) -> pd.DataFra
     # Create a new DataFrame from the dictionary
     new_df = pd.DataFrame(data_dict)
     new_df[dd.propensity_scores] = psm
-
-    return new_df, metrics_df
+    logger.debug(f'data in logreg "\n {data.head()}')
+    psm_original_df =  pd.concat([original_df, data[dd.propensity_scores]], axis=1)
+    return new_df, metrics_df, psm_original_df
