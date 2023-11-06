@@ -28,7 +28,8 @@ def matchPatients(path:str, label_columns:list, one_hot_columns:list, target_col
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
     model_name = ['NN','LR', 'RF', 'SVM'] #'LR', 'NN', 'RF', 'SVM''LogisticRegression', 'NeuralNetwork', 'RandomForest', 'SupportVectorMachine'  # Change this to the desired model (LogisticRegression, NeuralNetwork, RandomForest, SupportVectorMachine)
-    bmi_diff, age_diff, sex_diff, race_diff, eth_diff, result_dfs = [], [], [], [], [], target_column
+    bmi_diff, age_diff, sex_diff, race_diff, eth_diff, result_dfs = [], [], [], [], [], []
+    target = target_column
     # Set the logging level for Matplotlib to INFO (or higher)
     matplotlib.rcParams['font.family'] = 'sans-serif'
     matplotlib.rcParams['font.sans-serif'] = ['Arial']
